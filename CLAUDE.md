@@ -1,0 +1,129 @@
+# CLAUDE.md
+
+글룸헤이븐 1판 시나리오 흐름도 — 정적 단일 페이지 웹앱. GitHub Pages로 배포한다.
+
+## 1. 프로젝트 개요
+
+- **목적**: 글룸헤이븐 1판 시나리오 95개의 해금 관계·목표·요구 조건·몬스터·보상·줄거리를 한 페이지에서 추적한다.
+- **성격**: 빌드 없음, 의존성 없음, 서버 없음. `index.html` 하나가 앱 전체다.
+- **스포일러**: 전체 공개가 의도된 설계다. 스포일러 가리기 기능을 임의로 넣지 않는다.
+- **언어**: UI·데이터·문서 모두 한국어(`<html lang="ko">`). 영문 시나리오명은 보조 표기로만 병기한다.
+
+## 2. 파일 구조
+
+```
+index.html   앱 전체 (CSS + 데이터 + 로직 인라인, 약 330줄)
+README.md    공개용 설명과 데이터 출처 표기
+.nojekyll    GitHub Pages의 Jekyll 처리 비활성화 (삭제 금지)
+CLAUDE.md    이 문서
+```
+
+빌드 산출물·`package.json`·번들러·프레임워크가 **없다**. 추가하지 않는다.
+외부 리소스는 Google Fonts(Gowun Batang, IBM Plex Sans KR) 뿐이다. 오프라인에서도 폰트만 대체되고 정상 동작해야 한다.
+
+## 3. index.html 내부 지도
+
+줄 번호는 변동되므로 아래 앵커 문자열로 찾는다.
+
+| 영역 | 앵커 | 내용 |
+|---|---|---|
+| 테마 토큰 | `:root{` | CSS 변수. 다크가 기본, `prefers-color-scheme` + `data-theme` 오버라이드 3중 정의 |
+| 마크업 | `<header>` ~ `</main>` | 헤더(탭·검색·범례·진행도·테마), `#graph`/`#side` 뷰, `#panel` 상세 패널 |
+| 시나리오 데이터 | `const S=` | id 문자열 키 → 시나리오 객체 95개 (단일 행, 약 74KB) |
+| 레이아웃 데이터 | `const L=` | 메인 캠페인 그래프의 좌표·엣지 경로 (단일 행, 약 10KB) |
+| 사이드 그룹 | `const SIDE=` | 사이드 시나리오 분류와 체인 배열 |
+| 그래프 렌더 | `function buildGraph()` | `L`로 SVG 생성. 노드 크기 `NW=190, NH=62` |
+| 사이드 렌더 | `function buildSide()` | `SIDE`로 카드 목록 생성 |
+| 상세 패널 | `function renderPanel(id)` | `S[id]`의 모든 필드를 섹션별로 출력 |
+| 상태 갱신 | `function refresh()` | 클리어/막힘/선택/검색 상태를 클래스 토글로 반영 |
+| 초기화 | `buildGraph();buildSide();refresh();` | 파일 최하단. 초기 줌은 폭 700px 미만이면 0.6, 아니면 0.72 |
+
+## 4. 데이터 스키마 (`const S`)
+
+```js
+"1": {
+  id: 1,                   // 숫자. 키(문자열)와 반드시 일치
+  ko: "검은 봉분",          // 한국어 시나리오명 (이 페이지용 창작 번역)
+  en: "Black Barrow",      // 원문 영문명
+  grid: "G-10",            // 캠페인 지도 좌표
+  grp: "도입",              // 그룹 라벨. 빈 문자열 허용
+  goal: "모든 적 처치",      // 목표
+  gv: 1,                   // 1=원문 대조 완료, 0=패널에 "확인 필요" 배지 표시
+  sum: "...",              // 줄거리 요약
+  note: "...",             // 특수 규칙·메모. 없으면 섹션 자체가 숨겨짐
+  mons: [{n:"살아있는 뼈", b:false}],  // n=이름, b=보스 여부
+  reqs: [[{t:"첫 걸음", s:"파티", neg:false}]],
+                           // 2중 배열: 외부=OR(대안), 내부=AND
+                           // t=업적명, s=범주("파티"|"글로벌"...), neg=true면 "미달성이어야 함"
+  rw: ["파티 업적: 첫 걸음"],  // 보상 문자열 목록
+  unlocks: [2],            // 클리어 시 해금되는 시나리오
+  choose: [],              // 해금 후보 중 하나만 선택 가능 (점선 엣지, frost 색)
+  links: [2],              // 클리어 직후 바로 이어 진행 가능
+  blocks: [],              // 클리어하면 영구히 막히는 시나리오
+  src: ["개인 퀘스트 ..."],  // 텍스트로만 설명되는 해금 출처
+  side: false,             // true면 사이드 탭에 표시 (52~95, 44개)
+  from: [],                // 역방향 인덱스: 이 시나리오를 해금하는 시나리오들
+  tfrom: true              // (#17 한정) #37 보물 상자로도 해금됨을 패널에 표기
+}
+```
+
+**불변식**
+- `from`은 다른 시나리오의 `unlocks`/`choose`에서 파생된 역방향 인덱스다. `unlocks`를 고치면 대상의 `from`도 같이 고친다.
+- `blocks`는 `blockedSet()`이 "막힘" 상태를 계산하는 근거다. 상호 배타 관계는 양쪽에 모두 넣는다.
+- 메인 캠페인(1~51)만 `L.pos`에 좌표가 있다. `side:false`인데 좌표가 없으면 그래프에서 사라진다.
+
+## 5. 레이아웃 데이터 (`const L`)
+
+```js
+{ w: 2965, h: 797,                      // SVG 논리 크기 (렌더 시 pad=40 추가)
+  pos: { "1": [68.5, 339.5], ... },      // 노드 중심 좌표 51개
+  edges: [ { a:1, b:2, t:"u", p:[[x,y],...] } ] }  // 67개
+```
+
+- `t`: `"u"` 일반 해금(실선), `"c"` 셋 중 하나만 선택(점선), `"t"` 보물로 해금(도트).
+- `p`는 미리 계산된 폴리라인 좌표다. **생성 스크립트가 저장소에 없다.** 좌표는 손으로 유지된다.
+- 따라서 노드를 추가/이동하려면 `L.pos`, 관련 `L.edges[].p`, 필요하면 `L.w/h`를 함께 갱신해야 한다. 엣지 경로를 갱신하지 않으면 선이 노드와 어긋난다.
+- 엣지의 화살표 마커는 `refresh()`가 선택 상태에 따라 `#ar-in`/`#ar-out`/`#ar-u|c|t`로 교체한다.
+
+## 6. 상태와 저장
+
+| 키 | 값 | 비고 |
+|---|---|---|
+| `localStorage['gh-done']` | 클리어한 시나리오 id 배열(JSON) | `done` Set으로 로드. try/catch로 감싸 실패해도 동작 |
+| `localStorage['gh-theme']` | `"light"` \| `"dark"` | `documentElement.dataset.theme`에 반영 |
+
+- 서버 저장·계정·동기화 없음. 사파리 프라이빗 모드 등에서 읽기/쓰기가 던질 수 있으므로 **모든 접근은 try/catch를 유지한다.**
+- "막힘"은 저장하지 않는다. `blockedSet()`이 `done`에서 매번 계산한다.
+
+## 7. 작업 규칙
+
+- **HTML 주입 시 `esc()` 필수.** 데이터에서 온 모든 문자열은 `esc()`를 거친다. 새 필드를 패널에 추가할 때도 동일.
+- **단일 파일 유지.** CSS·JS를 별 파일로 쪼개지 않는다. 데이터를 외부 JSON으로 빼지 않는다(파일 열기만으로 동작해야 한다).
+- **CSS 변수로만 색을 쓴다.** 하드코딩된 hex를 새로 넣지 말고 `var(--brass)` 등을 쓴다. 라이트/다크 3중 정의를 모두 갱신한다.
+- **파란색 버튼을 쓰지 않는다.** 액션 강조는 `--brass`/`--moss` 계열을 쓴다.
+- 데이터 일괄 수정은 Python으로 `const S=` 행을 파싱→수정→직렬화하는 방식이 안전하다:
+  ```python
+  import re, json
+  h = open('index.html', encoding='utf-8').read()
+  m = re.search(r'const S=(\{.*?\});\n', h, re.S)
+  S = json.loads(m.group(1))
+  # ... 수정 ...
+  h = h[:m.start(1)] + json.dumps(S, ensure_ascii=False) + h[m.end(1):]
+  open('index.html', 'w', encoding='utf-8').write(h)
+  ```
+- 커밋 전 확인: 브라우저로 `index.html`을 열어 ① 메인 탭 그래프가 어긋남 없이 그려지는지 ② 사이드 탭 ③ 노드 클릭 시 패널 ④ 검색(번호/이름/몬스터) ⑤ 클리어 체크 후 새로고침 유지 ⑥ 테마 전환 ⑦ 좁은 폭(모바일) 레이아웃.
+
+## 8. 배포 (GitHub Pages)
+
+- 저장소: `krindale/gloomhaven-flow`, 공개. `main` 브랜치 루트를 그대로 서빙한다.
+- 공개 URL: https://krindale.github.io/gloomhaven-flow/
+- 빌드 단계가 없으므로 `main`에 push하면 몇 분 안에 반영된다. Actions 워크플로를 추가할 필요가 없다.
+- `.nojekyll`이 없으면 Jekyll이 개입한다. 지우지 않는다.
+- 상태 확인: `gh api repos/krindale/gloomhaven-flow/pages`
+
+## 9. 출처와 라이선스 주의
+
+- 요구 조건·몬스터·보상·해금 관계: [Gloomhaven Secretariat](https://github.com/Lurkars/gloomhavensecretariat) (AGPL-3.0) 데이터 기반.
+- 사이드 시나리오 해금 경로: [gloomhaven-storyline](https://github.com/teamducro/gloomhaven-storyline) 참고.
+- 한국어 시나리오명·줄거리는 이 페이지용 창작 요약.
+- Gloomhaven은 Cephalofair Games 상표. 비공식 팬 페이지이며 README의 출처·상표 표기를 제거하지 않는다.
