@@ -41,6 +41,7 @@ h1{font:700 21px/1.2 var(--serif);margin:0;letter-spacing:-.01em}
 h1 small{font:400 13px var(--sans);color:var(--muted);margin-left:8px;letter-spacing:0}
 .tabs{display:flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}
 .tabs button{background:none;border:0;padding:6px 14px;cursor:pointer;color:var(--muted)}
+.tabs button small{font-size:11.5px;opacity:.75;margin-left:2px}
 .tabs button[aria-selected="true"]{background:var(--panel2);color:var(--text);font-weight:600}
 .search{flex:1 1 200px;max-width:320px;position:relative}
 .search input{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:7px 10px;color:var(--text);font:inherit}
@@ -145,8 +146,8 @@ ul.plain li{padding:3px 0}
 <header>
   <h1>글룸헤이븐 시나리오 흐름도<small>1판 · 95개 시나리오 · 스포일러 전체 공개</small></h1>
   <div class="tabs" role="tablist">
-    <button role="tab" aria-selected="true" data-v="graph">메인 캠페인</button>
-    <button role="tab" aria-selected="false" data-v="side">사이드</button>
+    <button role="tab" aria-selected="true" data-v="graph">메인 캠페인 <small>1~51</small></button>
+    <button role="tab" aria-selected="false" data-v="side">사이드 <small>52~95</small></button>
   </div>
   <div class="search"><input id="q" type="search" placeholder="번호, 이름, 몬스터, 업적으로 찾기" aria-label="시나리오 검색"></div>
   <div class="legend">
@@ -157,6 +158,7 @@ ul.plain li{padding:3px 0}
     <span><b style="border:1.5px dashed var(--blood)"></b>막힘</span>
   </div>
   <span class="progress" id="prog"></span>
+  <button class="theme" id="info" aria-label="정확도 안내">ⓘ 정확도</button>
   <button class="theme" id="theme" aria-label="밝기 전환">◐</button>
 </header>
 <main>
@@ -173,8 +175,9 @@ ul.plain li{padding:3px 0}
     <div class="empty">
       <h2>시나리오를 눌러 보세요</h2>
       <p>목표, 요구 조건, 등장 몬스터, 보상, 해금·차단 관계, 줄거리를 한 번에 보여줍니다.</p>
+      <p><b>메인 캠페인</b> 탭에 1~51번, <b>사이드</b> 탭에 52~95번이 있습니다. 합쳐서 95개 전부 들어 있습니다.</p>
       <p>클리어한 시나리오를 체크하면 이 브라우저에 저장되고, 그 선택으로 막힌 시나리오는 흐리게 표시됩니다.</p>
-      <p>목표 옆에 <span class="unv" style="margin:0">확인 필요</span> 표시가 붙은 것은 원문 대조를 못 한 항목이니 시나리오북으로 한 번 확인하세요.</p>
+      <p>목표 옆에 <span class="unv" style="margin:0">확인 필요</span> 표시가 붙은 것은 원문 대조를 못 한 항목이니 시나리오북으로 한 번 확인하세요. 자세한 내용은 헤더의 <b>ⓘ 정확도</b>를 눌러 보세요.</p>
     </div>
   </aside>
 </main>
@@ -250,6 +253,34 @@ function buildSide(){
 
 // ---------- panel ----------
 function lk(id,cls=''){return `<button class="lk ${cls}" data-go="${id}"><b>${id}</b>${esc(S[id].ko)}</button>`}
+function foot(s){
+  let t='요구 조건·몬스터·보상·해금 관계는 Gloomhaven Secretariat 오픈소스 데이터 그대로입니다. 한국어 이름은 공식 한글판 명칭이 아니라 이 페이지에서 옮긴 이름이라 실물 책과 다를 수 있습니다.';
+  t+=s.gv?' 목표는 시나리오북 원문과 대조했습니다.':' 목표는 원문을 확보하지 못해 확인이 필요합니다.';
+  t+=s.side?' 사이드 시나리오는 줄거리를 지어내지 않으려고 해금 경로·규칙 위주로만 짧게 적었습니다.'
+          :' 줄거리는 원문을 기반으로 썼습니다.';
+  return t;
+}
+
+function showInfo(){
+  const unv=Object.keys(S).map(Number).filter(i=>!S[i].gv).sort((a,b)=>a-b);
+  sel=null; refresh();
+  $('#panel').innerHTML=`
+  <div class="ph"><button class="close" aria-label="닫기">×</button>
+    <div class="row"><div class="big">ⓘ</div><div><h2>정확도 안내</h2>
+      <div class="sub">어디까지 믿어도 되는지</div></div></div>
+    <div class="meta"><span class="tag">전체 95개</span><span class="tag">메인 51</span><span class="tag">사이드 44</span></div>
+  </div>
+  <div class="sec"><h3>신뢰도 높음</h3><p class="story">요구 조건, 몬스터, 보상, 해금·차단 관계는 <b>Gloomhaven Secretariat</b>의 오픈소스 데이터를 그대로 가져왔습니다.</p></div>
+  <div class="sec"><h3>목표</h3><p class="story">1~41번과 일부 사이드 시나리오는 시나리오북 원문과 대조했습니다. 나머지(주로 42번 이후 상당수)는 대조할 원문을 확보하지 못해 지식으로 채웠고, 그 항목에는 <span class="unv" style="margin:0">확인 필요</span> 표시를 붙였습니다.</p></div>
+  <div class="sec"><h3>줄거리</h3><p class="story">메인 스토리는 원문을 기반으로 충실히 썼습니다. 사이드 시나리오는 스토리를 지어내지 않으려고 해금 경로와 규칙 위주로만 짧게 적었습니다.</p></div>
+  <div class="sec"><h3>한국어 시나리오명</h3><p class="story">공식 한글판 명칭이 아니라 이 페이지에서 옮긴 이름입니다. 실물 책과 다를 수 있으니 영문명을 함께 확인하세요.</p></div>
+  <div class="sec"><h3>확인 필요 ${unv.length}개</h3><div class="links">${unv.map(x=>lk(x)).join('')}</div></div>
+  <p class="foot">확인 필요로 표시된 시나리오의 시나리오북 페이지를 사진으로 보내주시면 목표와 줄거리를 원문 기준으로 채워 업데이트합니다.</p>`;
+  $('#panel').scrollTop=0; $('#panel').classList.add('open');
+  $('#panel .close').onclick=()=>$('#panel').classList.remove('open');
+  $('#panel').querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>{const t=+b.dataset.go;const v=S[t].side?'side':'graph';showView(v);select(t,true)});
+}
+
 function renderPanel(id){
   const s=S[id], blk=blockedSet();
   let reqs='';
@@ -283,7 +314,7 @@ function renderPanel(id){
   <div class="sec"><h3>해금 경로</h3>${src}</div>
   ${(opens||choose)?`<div class="sec"><h3>클리어하면 열리는 시나리오</h3>${opens}${choose}</div>`:''}
   ${blocks}
-  <p class="foot">요구 조건·몬스터·보상·해금 관계는 Gloomhaven Secretariat 데이터 기준. 한국어 시나리오명과 줄거리는 이 페이지용으로 새로 쓴 요약입니다.</p>`;
+  <p class="foot">${foot(s)}</p>`;
   $('#panel').scrollTop=0;
   $('#panel .done-btn').onclick=()=>{done.has(id)?done.delete(id):done.add(id);save();refresh();renderPanel(id)};
   $('#panel .close').onclick=()=>$('#panel').classList.remove('open');
@@ -312,7 +343,7 @@ function refresh(){
       else {e.classList.add('fade');e.setAttribute('marker-end',`url(#ar-${kind})`)} }
     else e.setAttribute('marker-end',`url(#ar-${kind})`);
   });
-  $('#prog').innerHTML=`클리어 <strong>${done.size}</strong> / 95`;
+  $('#prog').innerHTML=`클리어 <strong>${done.size}</strong> / 95 <span style="opacity:.7">(메인 51 + 사이드 44)</span>`;
 }
 function showView(v){
   document.querySelectorAll('.tabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.v===v));
@@ -321,6 +352,7 @@ function showView(v){
 }
 document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>showView(b.dataset.v));
 $('#q').addEventListener('input',()=>{refresh();const q=$('#q').value.trim();if(/^\d+$/.test(q)&&S[+q]){showView(S[+q].side?'side':'graph');select(+q,true)}});
+$('#info').onclick=showInfo;
 $('#theme').onclick=()=>{const r=document.documentElement;const cur=r.dataset.theme||(matchMedia('(prefers-color-scheme: light)').matches?'light':'dark');r.dataset.theme=cur==='light'?'dark':'light';try{localStorage.setItem('gh-theme',r.dataset.theme)}catch(e){}};
 try{const t=localStorage.getItem('gh-theme');if(t)document.documentElement.dataset.theme=t}catch(e){}
 buildGraph();buildSide();refresh();requestAnimationFrame(()=>{zoom=$('#graph').clientWidth<700?.6:.72;applyZoom()});

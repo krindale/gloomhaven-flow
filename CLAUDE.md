@@ -36,6 +36,8 @@ CLAUDE.md    이 문서
 | 사이드 렌더 | `function buildSide()` | `SIDE`로 카드 목록 생성 |
 | 상세 패널 | `function renderPanel(id)` | `S[id]`의 모든 필드를 섹션별로 출력 |
 | 상태 갱신 | `function refresh()` | 클리어/막힘/선택/검색 상태를 클래스 토글로 반영 |
+| 정확도 안내 | `function showInfo()` | 헤더 ⓘ 버튼. `gv:0` 목록을 실시간 집계 |
+| 패널 하단 고지 | `function foot(s)` | `side`/`gv`에 따라 문구 분기 |
 | 초기화 | `buildGraph();buildSide();refresh();` | 파일 최하단. 초기 줌은 폭 700px 미만이면 0.6, 아니면 0.72 |
 
 ## 4. 데이터 스키마 (`const S`)
@@ -121,7 +123,24 @@ CLAUDE.md    이 문서
 - `.nojekyll`이 없으면 Jekyll이 개입한다. 지우지 않는다.
 - 상태 확인: `gh api repos/krindale/gloomhaven-flow/pages`
 
-## 9. 출처와 라이선스 주의
+## 9. 정확도 정책 (사용자 확정 사항)
+
+페이지에 표시되는 신뢰도 구분은 아래가 기준이다. 헤더 **ⓘ 정확도** 버튼(`showInfo()`)과 README, 각 시나리오 패널 하단 `foot(s)`가 이 내용을 그대로 반영한다. 셋을 고칠 때는 함께 고친다.
+
+| 항목 | 신뢰도 | 근거 |
+|---|---|---|
+| 요구 조건·몬스터·보상·해금·차단 | 높음 | Gloomhaven Secretariat 오픈소스 데이터 그대로 |
+| 목표 (1~41 + 일부 사이드) | 대조 완료 | 시나리오북 원문 대조. `gv:1` |
+| 목표 (42 이후 상당수, 47개) | 미확인 | 원문 미확보. `gv:0` → 패널에 "확인 필요" 배지 |
+| 줄거리 (메인) | 원문 기반 | 충실히 요약 |
+| 줄거리 (사이드) | 의도적 축약 | 스토리를 지어내지 않고 해금 경로·규칙만 |
+| 한국어 시나리오명 | 비공식 | 공식 한글판 명칭 아님. 영문명 병기로 보완 |
+
+- **추측으로 `gv`를 1로 올리지 않는다.** 사용자가 시나리오북 페이지 사진을 제공했을 때만 해당 `goal`/`sum`을 원문 기준으로 고치고 `gv:1`로 바꾼다.
+- 사이드 시나리오의 `sum`에 없는 스토리를 창작해 넣지 않는다.
+- `확인 필요` 개수는 `showInfo()`가 `gv:0`을 세어 실시간으로 표시한다. 하드코딩된 숫자를 넣지 않는다(README의 47개 표기만 수동).
+
+## 10. 출처와 라이선스 주의
 
 - 요구 조건·몬스터·보상·해금 관계: [Gloomhaven Secretariat](https://github.com/Lurkars/gloomhavensecretariat) (AGPL-3.0) 데이터 기반.
 - 사이드 시나리오 해금 경로: [gloomhaven-storyline](https://github.com/teamducro/gloomhaven-storyline) 참고.
