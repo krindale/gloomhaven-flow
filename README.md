@@ -5,6 +5,11 @@
 - **메인 캠페인** 탭: 1~51번 흐름도 / **사이드** 탭: 52~95번 목록 — 합쳐서 95개 전부
 - 클리어 체크는 브라우저 localStorage에 저장 (서버 저장·계정 없음)
 - 헤더의 **ⓘ 정확도** 버튼에 어디까지 믿어도 되는지 정리해 두었습니다
+- 각 시나리오 패널의 **전투 준비 · 방별 배치**: 방마다 맵 타일과 2/3/4인별 몬스터 구성(일반·정예·보스), 보물·마커·목표물, 방 연결을 보여줍니다
+
+## 전투 준비 데이터의 한계
+
+방 번호, 맵 타일 ID, 인원수별 몬스터 수는 Gloomhaven Secretariat 데이터 그대로라 정확합니다. 다만 **타일의 회전·연결 위치, 몬스터가 놓이는 헥스, 문·장애물·함정 위치는 공개 데이터에 없어 표시하지 않습니다.** 실제 배치는 시나리오북을 보고 깔아야 합니다.
 
 ## 정확도
 
@@ -16,6 +21,7 @@
 ## 데이터 출처
 - 요구 조건·몬스터·보상·해금 관계: [Gloomhaven Secretariat](https://github.com/Lurkars/gloomhavensecretariat) 데이터 (AGPL-3.0)
 - 사이드 시나리오 해금 경로 참고: [gloomhaven-storyline](https://github.com/teamducro/gloomhaven-storyline)
+- 맵 타일 이미지: [any2cards/worldhaven](https://github.com/any2cards/worldhaven) (jsDelivr로 불러옴)
 - 한국어 시나리오명·줄거리 요약은 이 페이지용으로 새로 작성
 
 Gloomhaven은 Cephalofair Games의 상표입니다. 비공식 팬 제작 페이지입니다.

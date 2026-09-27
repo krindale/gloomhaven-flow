@@ -12,11 +12,16 @@
 ## 2. 파일 구조
 
 ```
-index.html   앱 전체 (CSS + 데이터 + 로직 인라인, 약 330줄)
-README.md    공개용 설명과 데이터 출처 표기
-.nojekyll    GitHub Pages의 Jekyll 처리 비활성화 (삭제 금지)
-CLAUDE.md    이 문서
+index.html              앱 전체 (CSS + 데이터 + 로직 인라인)
+README.md               공개용 설명과 데이터 출처 표기
+.nojekyll               GitHub Pages의 Jekyll 처리 비활성화 (삭제 금지)
+CLAUDE.md               이 문서
+tools/fetch_ghs.py      GHS 시나리오 JSON 1~95를 tools/ghs_cache/ 로 내려받음
+tools/build_battle_data.py  index.html 의 const MON/MAP 블록을 다시 생성
+tools/ghs_cache/        GHS 원본 JSON 95개 (생성 입력값, 재현용으로 커밋)
 ```
+
+`tools/`는 **페이지 빌드 단계가 아니다.** 전투 준비 데이터를 다시 만들 때만 수동으로 돌린다. 배포는 여전히 `index.html`을 그대로 서빙한다.
 
 빌드 산출물·`package.json`·번들러·프레임워크가 **없다**. 추가하지 않는다.
 외부 리소스는 Google Fonts(Gowun Batang, IBM Plex Sans KR) 뿐이다. 오프라인에서도 폰트만 대체되고 정상 동작해야 한다.
@@ -32,6 +37,8 @@ CLAUDE.md    이 문서
 | 시나리오 데이터 | `const S=` | id 문자열 키 → 시나리오 객체 95개 (단일 행, 약 74KB) |
 | 레이아웃 데이터 | `const L=` | 메인 캠페인 그래프의 좌표·엣지 경로 (단일 행, 약 10KB) |
 | 사이드 그룹 | `const SIDE=` | 사이드 시나리오 분류와 체인 배열 |
+| 전투 준비 데이터 | `const MON=` / `const MAP=` | **생성물.** 손으로 고치지 말고 `tools/build_battle_data.py`로 다시 만든다 |
+| 전투 준비 렌더 | `function roomsHtml(id)` | 방 카드 + 타일 이미지 + 인원수별 몬스터 |
 | 그래프 렌더 | `function buildGraph()` | `L`로 SVG 생성. 노드 크기 `NW=190, NH=62` |
 | 사이드 렌더 | `function buildSide()` | `SIDE`로 카드 목록 생성 |
 | 상세 패널 | `function renderPanel(id)` | `S[id]`의 모든 필드를 섹션별로 출력 |
@@ -73,6 +80,31 @@ CLAUDE.md    이 문서
 - `from`은 다른 시나리오의 `unlocks`/`choose`에서 파생된 역방향 인덱스다. `unlocks`를 고치면 대상의 `from`도 같이 고친다.
 - `blocks`는 `blockedSet()`이 "막힘" 상태를 계산하는 근거다. 상호 배타 관계는 양쪽에 모두 넣는다.
 - 메인 캠페인(1~51)만 `L.pos`에 좌표가 있다. `side:false`인데 좌표가 없으면 그래프에서 사라진다.
+
+## 4-B. 전투 준비 데이터 (`const MON`, `const MAP`) — 생성물
+
+`tools/build_battle_data.py`가 GHS 원본에서 만들어 `index.html` 안의 생성 블록 주석 사이에 써 넣는다. **직접 편집 금지.**
+
+```js
+const MON=["강도 궁수", ...]          // 58종. 인덱스로 참조
+const MAP={ "1": {
+  r:[{ n:1,                          // 방 번호
+       t:"L1a",                      // 맵 타일 ID. 없으면 "타일 지정 없음"으로 표시
+       s:1,                          // 시작 방
+       to:[2],                       // 이어지는 방
+       tr:[7],                       // 보물 번호
+       ob:[1],                       // 이 방의 목표물 (o 배열의 1-based 인덱스)
+       mk:"1",                       // 방 마커
+       m:[{ m:12,                    // MON 인덱스
+            c:[[2,1],[6,0],[4,2]],   // [2인,3인,4인] 각각 [일반, 정예] 수
+            b:1 }] }],               // 보스
+  o:[{ n:"Hail", e:1, h:"4+(2xL)", mk:"a" }] }}  // 목표물/호위 대상
+```
+
+- `MAP`에는 94개 시나리오가 들어간다. **#55는 GHS에 방 정보가 없어 빠져 있다** (UI가 안내 문구로 처리).
+- 한글 몬스터 이름은 GHS `monsters` 배열 순서와 `S[id].mons` 순서가 같다는 성질로 역산한다. 생성 스크립트가 95개 시나리오 전체에서 충돌을 검사하고, 하나라도 어긋나면 중단한다. **`S[].mons`의 순서를 임의로 바꾸면 이름 매핑이 깨진다.**
+- 인원수는 `pc`(2/3/4)에 보관하고 `localStorage['gh-pc']`에 저장한다. 해당 인원수에서 0마리인 몬스터는 줄 자체를 그리지 않는다.
+- 타일 이미지는 jsDelivr로 worldhaven에서 불러온다(`TILE()`). 저장소에 이미지를 복사해 넣지 않는다. 로드 실패 시 `onerror`가 타일 ID 안내 박스로 대체한다.
 
 ## 5. 레이아웃 데이터 (`const L`)
 
@@ -144,5 +176,7 @@ CLAUDE.md    이 문서
 
 - 요구 조건·몬스터·보상·해금 관계: [Gloomhaven Secretariat](https://github.com/Lurkars/gloomhavensecretariat) (AGPL-3.0) 데이터 기반.
 - 사이드 시나리오 해금 경로: [gloomhaven-storyline](https://github.com/teamducro/gloomhaven-storyline) 참고.
+- 방·타일·인원수별 몬스터 구성: Gloomhaven Secretariat 시나리오 JSON (AGPL-3.0).
+- 맵 타일 이미지: [any2cards/worldhaven](https://github.com/any2cards/worldhaven)에서 jsDelivr로 불러온다(복사·재배포하지 않음). 타일 아트는 Cephalofair Games 저작물이다.
 - 한국어 시나리오명·줄거리는 이 페이지용 창작 요약.
 - Gloomhaven은 Cephalofair Games 상표. 비공식 팬 페이지이며 README의 출처·상표 표기를 제거하지 않는다.
