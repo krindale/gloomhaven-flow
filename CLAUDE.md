@@ -19,6 +19,10 @@ CLAUDE.md               이 문서
 tools/fetch_ghs.py      GHS 시나리오 JSON 1~95를 tools/ghs_cache/ 로 내려받음
 tools/build_battle_data.py  index.html 의 const MON/MAP 블록을 다시 생성
 tools/ghs_cache/        GHS 원본 JSON 95개 (생성 입력값, 재현용으로 커밋)
+tools/fetch_layouts.py  datahaven 배치 좌표를 tools/dh_cache/ 로 내려받음
+tools/build_map_layout.py   index.html 의 const LMON/OVN/LAY 블록을 다시 생성 (--bbox 필수)
+tools/_emit.py          위 스크립트의 검증·인코딩 보조
+tools/dh_cache/         datahaven 원본 JSON 95개
 ```
 
 `tools/`는 **페이지 빌드 단계가 아니다.** 전투 준비 데이터를 다시 만들 때만 수동으로 돌린다. 배포는 여전히 `index.html`을 그대로 서빙한다.
@@ -39,6 +43,8 @@ tools/ghs_cache/        GHS 원본 JSON 95개 (생성 입력값, 재현용으로
 | 사이드 그룹 | `const SIDE=` | 사이드 시나리오 분류와 체인 배열 |
 | 전투 준비 데이터 | `const MON=` / `const MAP=` | **생성물.** 손으로 고치지 말고 `tools/build_battle_data.py`로 다시 만든다 |
 | 전투 준비 렌더 | `function roomsHtml(id)` | 방 카드 + 타일 이미지 + 인원수별 몬스터 |
+| 헥스 배치 데이터 | `const LMON=` / `const OVN=` / `const LAY=` | **생성물.** `tools/build_map_layout.py --bbox` 로만 갱신 |
+| 헥스 지도 렌더 | `function mapSvg(id,s)` / `openMap(id)` | 전체 화면 오버레이 `#mapwrap` |
 | 그래프 렌더 | `function buildGraph()` | `L`로 SVG 생성. 노드 크기 `NW=190, NH=62` |
 | 사이드 렌더 | `function buildSide()` | `SIDE`로 카드 목록 생성 |
 | 상세 패널 | `function renderPanel(id)` | `S[id]`의 모든 필드를 섹션별로 출력 |
@@ -107,6 +113,30 @@ const MAP={ "1": {
 - 한글 몬스터 이름은 GHS `monsters` 배열 순서와 `S[id].mons` 순서가 같다는 성질로 역산한다. 생성 스크립트가 95개 시나리오 전체에서 충돌을 검사하고, 하나라도 어긋나면 중단한다. **`S[].mons`의 순서를 임의로 바꾸면 이름 매핑이 깨진다.**
 - 인원수는 `pc`(2/3/4)에 보관하고 `localStorage['gh-pc']`에 저장한다. 해당 인원수에서 0마리인 몬스터는 줄 자체를 그리지 않는다.
 - 타일 이미지는 jsDelivr로 worldhaven에서 불러온다(`TILE()`). 저장소에 이미지를 복사해 넣지 않는다. 로드 실패 시 `onerror`가 타일 ID 안내 박스로 대체한다.
+
+## 4-C. 헥스 배치 데이터 (`const LAY`) — 생성물
+
+`tools/build_map_layout.py --bbox` 가 datahaven(Tabletop Simulator 배치 좌표)에서 만든다. **직접 편집 금지.**
+
+```js
+const LMON=["강도 경비병", ...]        // datahaven 몬스터 이름순 한국어 이름
+const OVN=[["trap","가시 함정"], ...]   // 오버레이/문 종류: [분류, 한국어]
+const LAY={ "1": {
+  r:[{ n:1, t:"L1a",
+       f:[[row, colStart, 개수], ...],      // 바닥 헥스, 행별 런렝스 (col 은 2칸 간격)
+       m:[[monIdx, c, r, t2, t3, t4]],      // t*: 0 없음 1 일반 2 정예 3 보스
+       s:[[c,r]],                           // 시작 헥스
+       v:[[ovnIdx, c, r]] }],               // 장애물·함정·보물·통로
+  d:[[ovnIdx, c, r, 방A, 방B]] }}           // 문·안개
+```
+
+**좌표계**: 평평한 윗면(flat-top) 헥스를 쓰는 배가(doubled) 좌표. 가로 이웃은 `(c±1, r±1)`, 세로 이웃은 `(c, r±2)`, `c+r` 은 항상 같은 패리티다. 화면 좌표는 `X = c·1.5s`, `Y = r·(√3/2)s`.
+
+**정확한 것 / 추정인 것**
+- 몬스터·장애물·함정·보물·문·시작 헥스의 좌표와 인원수별 등급: datahaven 원본 그대로. **정확하다.**
+- **바닥 타일 모양은 추정이다.** 타일 한 면의 전체 헥스 목록은 어떤 공개 데이터에도 없어서, 같은 타일 면을 쓴 모든 시나리오의 점유 헥스를 평행이동으로 정렬해 합집합을 만들고 그 외접 사각형을 채운다(`--bbox`). 실제 타일 가장자리와 다를 수 있고, UI 하단에 그렇게 고지한다.
+- 검증: 몬스터 스탠디 총수를 GHS와 대조해 **81/95 시나리오가 완전 일치**한다. 나머지 14개는 보스 스탠디 이름 차이(#36, #49, #58, #62, #87, #88, #95)이거나 datahaven 이 스폰 물량을 미리 깔아 둔 경우(#19, #41, #57, #69, #74, #78)다.
+- 방 바닥의 연결성: 문·통로 헥스를 포함하면 94개 중 65개가 완전히 하나로 이어진다. 나머지는 바닥 추정이 짧아 생긴 틈이다.
 
 ## 5. 레이아웃 데이터 (`const L`)
 

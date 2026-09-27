@@ -8,9 +8,13 @@
 - 헤더의 **ⓘ 정확도** 버튼에 어디까지 믿어도 되는지 정리해 두었습니다
 - 각 시나리오 패널의 **전투 준비 · 방별 배치**: 방마다 맵 타일과 2/3/4인별 몬스터 구성(일반·정예·보스), 보물·마커·목표물, 방 연결을 보여줍니다
 
-## 전투 준비 데이터의 한계
+- **🗺 헥스 배치도**: 타일이 연결된 실제 지도 위에 몬스터·장애물·함정·보물·문·시작 헥스를 헥스 단위로 표시합니다 (94개 시나리오)
 
-방 번호, 맵 타일 ID, 인원수별 몬스터 수는 Gloomhaven Secretariat 데이터 그대로라 정확합니다. 다만 **타일의 회전·연결 위치, 몬스터가 놓이는 헥스, 문·장애물·함정 위치는 공개 데이터에 없어 표시하지 않습니다.** 실제 배치는 시나리오북을 보고 깔아야 합니다.
+## 배치도의 정확도
+
+몬스터가 놓이는 헥스, 장애물·함정·보물·문의 위치, 인원수별 일반/정예 구분은 Tabletop Simulator 배치 데이터([datahaven](https://github.com/Sebaestschjin/datahaven))에서 그대로 가져왔습니다. 몬스터 스탠디 총수를 Gloomhaven Secretariat 데이터와 대조하면 95개 중 81개가 완전히 일치하고, 나머지는 보스 스탠디 이름 차이이거나 스폰 물량을 미리 깔아 둔 경우입니다.
+
+다만 **바닥 타일의 모양은 추정치입니다.** 타일 한 면의 전체 헥스 목록은 어떤 공개 데이터에도 없어서, 같은 타일을 쓴 모든 시나리오의 점유 헥스를 모아 복원했습니다. 실제 타일 가장자리와 다를 수 있으니 타일을 깔 때는 시나리오북을 보세요.
 
 ## 정확도
 
@@ -23,6 +27,7 @@
 - 요구 조건·몬스터·보상·해금 관계: [Gloomhaven Secretariat](https://github.com/Lurkars/gloomhavensecretariat) 데이터 (AGPL-3.0)
 - 사이드 시나리오 해금 경로 참고: [gloomhaven-storyline](https://github.com/teamducro/gloomhaven-storyline)
 - 맵 타일 이미지: [any2cards/worldhaven](https://github.com/any2cards/worldhaven) (jsDelivr로 불러옴)
+- 헥스 단위 배치 좌표: [Sebaestschjin/datahaven](https://github.com/Sebaestschjin/datahaven)
 - 한국어 시나리오명·줄거리 요약은 이 페이지용으로 새로 작성
 
 Gloomhaven은 Cephalofair Games의 상표입니다. 비공식 팬 제작 페이지입니다.
