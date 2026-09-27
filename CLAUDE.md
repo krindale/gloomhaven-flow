@@ -19,10 +19,14 @@ CLAUDE.md               이 문서
 tools/fetch_ghs.py      GHS 시나리오 JSON 1~95를 tools/ghs_cache/ 로 내려받음
 tools/build_battle_data.py  index.html 의 const MON/MAP 블록을 다시 생성
 tools/ghs_cache/        GHS 원본 JSON 95개 (생성 입력값, 재현용으로 커밋)
-tools/fetch_layouts.py  datahaven 배치 좌표를 tools/dh_cache/ 로 내려받음
-tools/build_map_layout.py   index.html 의 const LMON/OVN/LAY 블록을 다시 생성 (--bbox 필수)
-tools/_emit.py          위 스크립트의 검증·인코딩 보조
-tools/dh_cache/         datahaven 원본 JSON 95개
+tools/extract_tile_shapes.py  gloomhaven.one 번들에서 타일 모양·이미지 정보와 공식 시나리오 배치를 추출
+tools/fetch_tile_images.py    타일 이미지를 assets/tiles/ 로 내려받고 원본 크기 기록
+tools/fetch_layouts.py        datahaven 배치 좌표를 tools/dh_cache/ 로 내려받음
+tools/build_map_layout.py     index.html 의 const LMON/OVN/TIMG/LAY 블록을 다시 생성
+tools/_emit.py                위 스크립트의 검증·인코딩 보조
+tools/tile_shapes.json        타일 60종의 헥스 모양·이미지·오프셋 + 공식 배치 95개 (생성물)
+tools/dh_cache/               datahaven 원본 JSON 95개
+assets/tiles/*.webp           맵 타일 이미지 62장 (Creator Pack, CC BY-NC-SA 4.0)
 ```
 
 `tools/`는 **페이지 빌드 단계가 아니다.** 전투 준비 데이터를 다시 만들 때만 수동으로 돌린다. 배포는 여전히 `index.html`을 그대로 서빙한다.
@@ -43,8 +47,9 @@ tools/dh_cache/         datahaven 원본 JSON 95개
 | 사이드 그룹 | `const SIDE=` | 사이드 시나리오 분류와 체인 배열 |
 | 전투 준비 데이터 | `const MON=` / `const MAP=` | **생성물.** 손으로 고치지 말고 `tools/build_battle_data.py`로 다시 만든다 |
 | 전투 준비 렌더 | `function roomsHtml(id)` | 방 카드 + 타일 이미지 + 인원수별 몬스터 |
-| 헥스 배치 데이터 | `const LMON=` / `const OVN=` / `const LAY=` | **생성물.** `tools/build_map_layout.py --bbox` 로만 갱신 |
-| 헥스 지도 렌더 | `function mapSvg(id,s)` / `openMap(id)` | 전체 화면 오버레이 `#mapwrap` |
+| 배치도 데이터 | `const LMON=` / `const OVN=` / `const TIMG=` / `const LAY=` | **생성물.** `tools/build_map_layout.py` 로만 갱신 |
+| 배치도 렌더 | `function mapSvg(id)` / `openMap(id)` | 팝업 `#mapwrap` > `.mapbox` |
+| 보스 판정 | `hasBoss(id)` / `bossNames(id)` | `S[id].mons` 의 `b` 플래그. 노드에 ☠ 표시 |
 | 그래프 렌더 | `function buildGraph()` | `L`로 SVG 생성. 노드 크기 `NW=190, NH=62` |
 | 사이드 렌더 | `function buildSide()` | `SIDE`로 카드 목록 생성 |
 | 상세 패널 | `function renderPanel(id)` | `S[id]`의 모든 필드를 섹션별로 출력 |
@@ -114,29 +119,32 @@ const MAP={ "1": {
 - 인원수는 `pc`(2/3/4)에 보관하고 `localStorage['gh-pc']`에 저장한다. 해당 인원수에서 0마리인 몬스터는 줄 자체를 그리지 않는다.
 - 타일 이미지는 jsDelivr로 worldhaven에서 불러온다(`TILE()`). 저장소에 이미지를 복사해 넣지 않는다. 로드 실패 시 `onerror`가 타일 ID 안내 박스로 대체한다.
 
-## 4-C. 헥스 배치 데이터 (`const LAY`) — 생성물
+## 4-C. 헥스 배치도 데이터 (`const TIMG`, `const LAY`) — 생성물
 
-`tools/build_map_layout.py --bbox` 가 datahaven(Tabletop Simulator 배치 좌표)에서 만든다. **직접 편집 금지.**
+`tools/build_map_layout.py` 가 만든다. **직접 편집 금지.**
+
+배치의 바탕은 [Gloomhaven Line of Sight Tool](https://gloomhaven.one/) 번들에 들어 있는 **공식 시나리오 배치 95개**다. 타일 이름·격자 위치·회전이 그대로라 타일이 정확히 맞물린다(95개 전 시나리오에서 타일 간 헥스 겹침 0건). 그 위에 datahaven 의 몬스터·장애물·보물 좌표를 얹는다.
 
 ```js
-const LMON=["강도 경비병", ...]        // datahaven 몬스터 이름순 한국어 이름
-const OVN=[["trap","가시 함정"], ...]   // 오버레이/문 종류: [분류, 한국어]
+const TIMG={ "L1a":["W7XdxFp.webp",572,422], ... }      // 타일 이미지 파일과 원본 크기
 const LAY={ "1": {
-  r:[{ n:1, t:"L1a",
-       f:[[row, colStart, 개수], ...],      // 바닥 헥스, 행별 런렝스 (col 은 2칸 간격)
-       m:[[monIdx, c, r, t2, t3, t4]],      // t*: 0 없음 1 일반 2 정예 3 보스
-       s:[[c,r]],                           // 시작 헥스
-       v:[[ovnIdx, c, r]] }],               // 장애물·함정·보물·통로
-  d:[[ovnIdx, c, r, 방A, 방B]] }}           // 문·안개
+  p:[["L1a", imgX, imgY, 회전, 방번호], ...],            // 타일 이미지 배치 (px)
+  f:{ "1":[[col,rowStart,개수], ...] },                  // 방별 바닥 헥스 (열별 런렝스)
+  m:[[monIdx, hx, hy, t2,t3,t4]],                        // 몬스터: 0 없음 1 일반 2 정예 3 보스
+  v:[[ovnIdx, hx, hy]],                                  // 장애물·함정·보물
+  s:[[hx,hy]],                                           // 시작 헥스
+  d:[[통로여부, hx, hy, 회전, 색]] }}                     // 문·통로
 ```
 
-**좌표계**: 평평한 윗면(flat-top) 헥스를 쓰는 배가(doubled) 좌표. 가로 이웃은 `(c±1, r±1)`, 세로 이웃은 `(c, r±2)`, `c+r` 은 항상 같은 패리티다. 화면 좌표는 `X = c·1.5s`, `Y = r·(√3/2)s`.
+**좌표계**: LOS 앱과 같은 **odd-q 오프셋**(홀수 열이 반 칸 아래). 픽셀은 헥스 외접반지름 45px 기준으로 열 간격 67.5, 행 간격 √3·45, 홀수 열은 행의 절반만큼 내려간다. 헥스 좌상단 = `(67.5·x, √3·45·y + (x 홀수 ? √3·45/2 : 0))`, 중심은 거기서 `(+45, +√3·45/2)`.
 
-**정확한 것 / 추정인 것**
-- 몬스터·장애물·함정·보물·문·시작 헥스의 좌표와 인원수별 등급: datahaven 원본 그대로. **정확하다.**
-- **바닥 타일 모양은 추정이다.** 타일 한 면의 전체 헥스 목록은 어떤 공개 데이터에도 없어서, 같은 타일 면을 쓴 모든 시나리오의 점유 헥스를 평행이동으로 정렬해 합집합을 만들고 그 외접 사각형을 채운다(`--bbox`). 실제 타일 가장자리와 다를 수 있고, UI 하단에 그렇게 고지한다.
-- 검증: 몬스터 스탠디 총수를 GHS와 대조해 **81/95 시나리오가 완전 일치**한다. 나머지 14개는 보스 스탠디 이름 차이(#36, #49, #58, #62, #87, #88, #95)이거나 datahaven 이 스폰 물량을 미리 깔아 둔 경우(#19, #41, #57, #69, #74, #78)다.
-- 방 바닥의 연결성: 문·통로 헥스를 포함하면 94개 중 65개가 완전히 하나로 이어진다. 나머지는 바닥 추정이 짧아 생긴 틈이다.
+**타일 이미지 배치**: 타일 요소 원점에서 `(-38, -16)` 만큼 옮긴 자리가 이미지 좌상단이고, 회전별 보정값이 있으면 그 값(원본 60px 기준이라 0.75배)이 축을 덮어쓴다. 이미지는 자기 중심을 기준으로 회전한다. 이 규칙은 LOS 앱의 CSS·레지스트리를 그대로 옮긴 것이다.
+
+**정확도**
+- 타일 종류·위치·회전: 공식 배치 그대로. **정확하다.**
+- 몬스터·장애물·보물의 헥스: datahaven 좌표를 시나리오마다 (거울·60도 회전·평행이동)으로 공식 격자에 맞춘 것. **요소 3431개 중 3378개(98.5%)가 공식 바닥 안에 떨어진다.**
+- 몬스터 스탠디 총수는 GHS 와 대조해 95개 중 81개가 완전 일치(나머지는 보스 스탠디 이름 차이나 스폰 물량 차이).
+- **#55는 공식 배치에 맵 타일이 없어 지도가 없다**(UI가 버튼을 숨긴다).
 
 ## 5. 레이아웃 데이터 (`const L`)
 
@@ -225,6 +233,8 @@ const LAY={ "1": {
 - 요구 조건·몬스터·보상·해금 관계: [Gloomhaven Secretariat](https://github.com/Lurkars/gloomhavensecretariat) (AGPL-3.0) 데이터 기반.
 - 사이드 시나리오 해금 경로: [gloomhaven-storyline](https://github.com/teamducro/gloomhaven-storyline) 참고.
 - 방·타일·인원수별 몬스터 구성: Gloomhaven Secretariat 시나리오 JSON (AGPL-3.0).
-- 맵 타일 이미지: [any2cards/worldhaven](https://github.com/any2cards/worldhaven)에서 jsDelivr로 불러온다(복사·재배포하지 않음). 타일 아트는 Cephalofair Games 저작물이다.
+- 전투 준비 섹션의 타일 썸네일: [any2cards/worldhaven](https://github.com/any2cards/worldhaven)에서 jsDelivr로 불러온다(복사하지 않음).
+- **배치도의 타일 이미지(`assets/tiles/`)와 공식 시나리오 배치**: Cephalofair Games 의 [Creator Pack](https://boardgamegeek.com/thread/1733586/files-creation) 자산으로 **CC BY-NC-SA 4.0**이다. [Gloomhaven Line of Sight Tool](https://gloomhaven.one/)이 쓰는 것과 같은 파일이며, 비영리 팬 페이지에서 출처·라이선스를 밝히고 쓴다. **출처 표기를 지우지 말 것.**
+- 헥스 단위 몬스터·장애물 좌표: [Sebaestschjin/datahaven](https://github.com/Sebaestschjin/datahaven).
 - 한국어 시나리오명·줄거리는 이 페이지용 창작 요약.
 - Gloomhaven은 Cephalofair Games 상표. 비공식 팬 페이지이며 README의 출처·상표 표기를 제거하지 않는다.

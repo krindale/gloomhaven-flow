@@ -8,13 +8,16 @@
 - 헤더의 **ⓘ 정확도** 버튼에 어디까지 믿어도 되는지 정리해 두었습니다
 - 각 시나리오 패널의 **전투 준비 · 방별 배치**: 방마다 맵 타일과 2/3/4인별 몬스터 구성(일반·정예·보스), 보물·마커·목표물, 방 연결을 보여줍니다
 
-- **🗺 헥스 배치도**: 타일이 연결된 실제 지도 위에 몬스터·장애물·함정·보물·문·시작 헥스를 헥스 단위로 표시합니다 (94개 시나리오)
+- **🗺 헥스 배치도**: 실제 맵 타일 이미지로 그린 시나리오 지도 위에 몬스터·장애물·함정·보물·문·시작 헥스를 헥스 단위로 표시합니다 (94개 시나리오, 팝업)
+- 보스가 나오는 시나리오는 흐름도에 **☠** 로 표시됩니다 (24개)
 
 ## 배치도의 정확도
 
-몬스터가 놓이는 헥스, 장애물·함정·보물·문의 위치, 인원수별 일반/정예 구분은 Tabletop Simulator 배치 데이터([datahaven](https://github.com/Sebaestschjin/datahaven))에서 그대로 가져왔습니다. 몬스터 스탠디 총수를 Gloomhaven Secretariat 데이터와 대조하면 95개 중 81개가 완전히 일치하고, 나머지는 보스 스탠디 이름 차이이거나 스폰 물량을 미리 깔아 둔 경우입니다.
+타일 종류·위치·회전은 [Gloomhaven Line of Sight Tool](https://gloomhaven.one/)이 들고 있는 **공식 시나리오 배치**를 그대로 씁니다. 95개 전 시나리오에서 타일끼리 헥스가 한 칸도 겹치지 않는 것을 확인했습니다.
 
-다만 **바닥 타일의 모양은 추정치입니다.** 타일 한 면의 전체 헥스 목록은 어떤 공개 데이터에도 없어서, 같은 타일을 쓴 모든 시나리오의 점유 헥스를 모아 복원했습니다. 실제 타일 가장자리와 다를 수 있으니 타일을 깔 때는 시나리오북을 보세요.
+몬스터·장애물·보물의 헥스 위치와 인원수별 일반/정예 구분은 Tabletop Simulator 배치 데이터([datahaven](https://github.com/Sebaestschjin/datahaven))에서 가져와 공식 격자에 맞췄고, 요소 3431개 중 3378개(98.5%)가 타일 위에 정확히 떨어집니다. 몬스터 스탠디 총수를 Gloomhaven Secretariat 데이터와 대조하면 95개 중 81개가 완전히 일치하고, 나머지는 보스 스탠디 이름 차이이거나 스폰 물량을 미리 깔아 둔 경우입니다.
+
+#55(안개 덤불)는 공식 배치에 맵 타일이 없어 지도가 없습니다.
 
 ## 정확도
 
@@ -27,7 +30,8 @@
 - 요구 조건·몬스터·보상·해금 관계: [Gloomhaven Secretariat](https://github.com/Lurkars/gloomhavensecretariat) 데이터 (AGPL-3.0)
 - 사이드 시나리오 해금 경로 참고: [gloomhaven-storyline](https://github.com/teamducro/gloomhaven-storyline)
 - 맵 타일 이미지: [any2cards/worldhaven](https://github.com/any2cards/worldhaven) (jsDelivr로 불러옴)
-- 헥스 단위 배치 좌표: [Sebaestschjin/datahaven](https://github.com/Sebaestschjin/datahaven)
+- 헥스 단위 몬스터·장애물 좌표: [Sebaestschjin/datahaven](https://github.com/Sebaestschjin/datahaven)
+- 배치도의 맵 타일 이미지와 공식 시나리오 배치: Cephalofair Games [Creator Pack](https://boardgamegeek.com/thread/1733586/files-creation) (CC BY-NC-SA 4.0), [Gloomhaven Line of Sight Tool](https://gloomhaven.one/) 경유
 - 한국어 시나리오명·줄거리 요약은 이 페이지용으로 새로 작성
 
 Gloomhaven은 Cephalofair Games의 상표입니다. 비공식 팬 제작 페이지입니다.

@@ -99,3 +99,24 @@ def cross_check_totals(D, G, room_items):
         else:
             ok += 1
     return ok, bad, detail
+
+
+def rle_off(hexes):
+    """odd-q 오프셋 헥스 목록 -> 열별 런렝스 [col, rowStart, 개수]"""
+    bycol = collections.defaultdict(list)
+    for x, y in hexes:
+        bycol[x].append(y)
+    out = []
+    for x in sorted(bycol):
+        rows = sorted(set(bycol[x]))
+        start = prev = rows[0]
+        n = 1
+        for y in rows[1:]:
+            if y == prev + 1:
+                n += 1
+            else:
+                out.append([x, start, n])
+                start, n = y, 1
+            prev = y
+        out.append([x, start, n])
+    return out
