@@ -6,7 +6,7 @@
 - 클리어 체크는 브라우저 localStorage에 저장 (서버 저장·계정 없음)
 - 클리어하면 **지금 진행할 수 있는 시나리오**가 황동색 ▶ 표시로 켜지고, 잠긴 것은 흐려집니다. 헤더의 **▶ 진행 가능 N**을 누르면 그것만 볼 수 있습니다
 - 헤더의 **ⓘ 정확도** 버튼에 어디까지 믿어도 되는지 정리해 두었습니다
-- 각 시나리오 패널의 **전투 준비 · 방별 배치**: 방마다 맵 타일과 2/3/4인별 몬스터 구성(일반·정예·보스), 보물·마커·목표물, 방 연결을 보여줍니다
+- 각 시나리오 패널의 **전투 준비 · 방별 구성**: 방마다 2/3/4인별 몬스터 구성(일반·정예·보스), 타일 ID, 보물·마커·목표물, 방 연결을 보여줍니다
 
 - **🗺 헥스 배치도**: 실제 맵 타일 이미지로 그린 시나리오 지도 위에 몬스터·장애물·함정·보물·문·시작 헥스를 헥스 단위로 표시합니다 (94개 시나리오, 팝업)
 - 보스가 나오는 시나리오는 흐름도에 **☠** 로 표시됩니다 (24개)
@@ -29,7 +29,6 @@
 ## 데이터 출처
 - 요구 조건·몬스터·보상·해금 관계: [Gloomhaven Secretariat](https://github.com/Lurkars/gloomhavensecretariat) 데이터 (AGPL-3.0)
 - 사이드 시나리오 해금 경로 참고: [gloomhaven-storyline](https://github.com/teamducro/gloomhaven-storyline)
-- 맵 타일 이미지: [any2cards/worldhaven](https://github.com/any2cards/worldhaven) (jsDelivr로 불러옴)
 - 헥스 단위 몬스터·장애물 좌표: [Sebaestschjin/datahaven](https://github.com/Sebaestschjin/datahaven)
 - 배치도의 맵 타일 이미지와 공식 시나리오 배치: Cephalofair Games [Creator Pack](https://boardgamegeek.com/thread/1733586/files-creation) (CC BY-NC-SA 4.0), [Gloomhaven Line of Sight Tool](https://gloomhaven.one/) 경유
 - 한국어 시나리오명·줄거리 요약은 이 페이지용으로 새로 작성

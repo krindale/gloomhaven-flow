@@ -157,14 +157,11 @@ ul.plain li{padding:3px 0}
 .room-h{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:8px}
 .room-h b{font:700 14px var(--serif);margin-right:2px}
 .room-h .tag{font-size:11px}
-.tile{display:block;width:100%;max-height:230px;object-fit:contain;border-radius:6px;margin:0 0 8px;background:var(--panel2);cursor:zoom-in}
-.tile.big{max-height:none;cursor:zoom-out}
-.tile-x{font-size:12px;color:var(--muted);background:var(--panel2);border-radius:6px;padding:10px;text-align:center;margin-bottom:8px}
 .mrow{display:flex;align-items:center;gap:6px;padding:3px 0;font-size:13.5px;border-top:1px dashed var(--line)}
 .mrow:first-of-type{border-top:0}
 .mrow .nm{flex:1;min-width:0}
 .cnt{font-size:11.5px;border-radius:4px;padding:1px 7px;background:var(--panel2);color:var(--muted);white-space:nowrap}
-.cnt.e{color:var(--brass);border:1px solid var(--brass);background:none}
+.cnt.elite{color:var(--brass);border:1px solid var(--brass);background:none}
 .cnt.bs{color:var(--blood);border:1px solid var(--blood);background:none}
 .room .none{color:var(--muted);font-size:12.5px}
 .obj{font-size:13px;background:var(--panel2);border-radius:6px;padding:7px 10px;margin-bottom:8px}
@@ -403,7 +400,6 @@ function buildSide(){
 
 // ---------- panel ----------
 function lk(id,cls=''){return `<button class="lk ${cls}" data-go="${id}"><b>${id}</b>${esc(S[id].ko)}</button>`}
-const TILE=r=>`https://cdn.jsdelivr.net/gh/any2cards/worldhaven@master/images/map-tiles/gloomhaven/gh-${r.toLowerCase()}.png`;
 let pc=4; try{const v=+localStorage.getItem('gh-pc'); if(v>=2&&v<=4)pc=v}catch(e){}
 
 function roomsHtml(id){
@@ -418,7 +414,7 @@ function roomsHtml(id){
       if(!n&&!el) return '';
       return `<div class="mrow"><span class="nm">${esc(MON[m.m])}</span>`+
         (n?`<span class="cnt">일반 ×${n}</span>`:'')+
-        (el?`<span class="cnt ${m.b?'bs':'e'}">${m.b?'보스':'정예'} ×${el}</span>`:'')+`</div>`;
+        (el?`<span class="cnt ${m.b?'bs':'elite'}">${m.b?'보스':'정예'} ×${el}</span>`:'')+`</div>`;
     }).join('');
     h+=`<div class="room${r.s?' start':''}">
       <div class="room-h"><b>방 ${r.n}</b>${r.t?`<span class="tag">타일 ${esc(r.t)}</span>`:''}`+
@@ -428,7 +424,6 @@ function roomsHtml(id){
       ((r.tr||[]).map(t=>`<span class="tag" style="color:var(--brass);border-color:var(--brass)">보물 ${t}</span>`).join(''))+
       (r.to?`<span class="tag">→ 방 ${r.to.join(', ')}</span>`:'')+
       `</div>`+
-      (r.t?`<img class="tile" onclick="this.classList.toggle(&quot;big&quot;)" title="눌러서 크게 보기" loading="lazy" decoding="async" alt="맵 타일 ${esc(r.t)}" src="${TILE(r.t)}" onerror="this.outerHTML='<div class=&quot;tile-x&quot;>타일 ${esc(r.t)} 이미지를 불러오지 못했습니다</div>'">`:'<div class="tile-x">타일 지정 없음 (같은 방에서 추가 등장)</div>')+
       (mons||'<div class="none">이 인원수에서는 등장 몬스터 없음</div>')+
     `</div>`;
   }
@@ -436,7 +431,7 @@ function roomsHtml(id){
 }
 
 function battleSec(id){
-  return `<div class="sec"><div class="bt-h"><h3 style="margin:0">전투 준비 · 방별 배치</h3>
+  return `<div class="sec"><div class="bt-h"><h3 style="margin:0">전투 준비 · 방별 구성</h3>
     <div class="pc">${[2,3,4].map(n=>`<button data-pc="${n}" aria-pressed="${n===pc}">${n}인</button>`).join('')}</div></div>
     ${LAY[id]?`<button class="mapbtn" id="openmap">🗺 헥스 배치도 보기 — 타일 연결과 몬스터 위치</button>`:''}
     <div id="rooms">${roomsHtml(id)}</div></div>`;
@@ -602,7 +597,6 @@ function foot(s){
   t+=s.gv?' 목표는 시나리오북 원문과 대조했습니다.':' 목표는 원문을 확보하지 못해 확인이 필요합니다.';
   t+=s.side?' 사이드 시나리오는 줄거리를 지어내지 않으려고 해금 경로·규칙 위주로만 짧게 적었습니다.'
           :' 줄거리는 원문을 기반으로 썼습니다.';
-  t+=' 맵 타일 이미지는 any2cards/worldhaven에서 불러옵니다.';
   return t;
 }
 
@@ -688,7 +682,7 @@ function refresh(){
     for(const cl of ['done','open','req','locked']) c.classList.toggle(cl,st[id]===cl);
     c.classList.toggle('sel',id===sel);
     c.classList.toggle('dim',(!!q&&!match(id))||st[id]==='blocked'||(onlyOpen&&!openIds.has(id)))});
-  document.querySelectorAll('.e').forEach(e=>{const a=+e.dataset.a,b=+e.dataset.b;
+  document.querySelectorAll('#graph .e').forEach(e=>{const a=+e.dataset.a,b=+e.dataset.b;
     const kind=e.classList.contains('c')?'c':e.classList.contains('t')?'t':'u';
     e.classList.remove('in','out','fade');
     e.classList.remove('next');

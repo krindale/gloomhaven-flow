@@ -46,7 +46,7 @@ assets/tiles/*.webp           맵 타일 이미지 62장 (Creator Pack, CC BY-NC
 | 레이아웃 데이터 | `const L=` | 메인 캠페인 그래프의 좌표·엣지 경로 (단일 행, 약 10KB) |
 | 사이드 그룹 | `const SIDE=` | 사이드 시나리오 분류와 체인 배열 |
 | 전투 준비 데이터 | `const MON=` / `const MAP=` | **생성물.** 손으로 고치지 말고 `tools/build_battle_data.py`로 다시 만든다 |
-| 전투 준비 렌더 | `function roomsHtml(id)` | 방 카드 + 타일 이미지 + 인원수별 몬스터 |
+| 전투 준비 렌더 | `function roomsHtml(id)` | 방 카드(타일 ID·보물·마커·목표물·방 연결 + 인원수별 몬스터). **타일 이미지는 넣지 않는다 — 배치도가 대신한다** |
 | 배치도 데이터 | `const LMON=` / `const OVN=` / `const TIMG=` / `const LAY=` | **생성물.** `tools/build_map_layout.py` 로만 갱신 |
 | 배치도 렌더 | `function mapSvg(id)` / `openMap(id)` | 팝업 `#mapwrap` > `.mapbox` |
 | 보스 판정 | `hasBoss(id)` / `bossNames(id)` | `S[id].mons` 의 `b` 플래그. 노드에 ☠ 표시 |
@@ -117,7 +117,8 @@ const MAP={ "1": {
 - `MAP`에는 94개 시나리오가 들어간다. **#55는 GHS에 방 정보가 없어 빠져 있다** (UI가 안내 문구로 처리).
 - 한글 몬스터 이름은 GHS `monsters` 배열 순서와 `S[id].mons` 순서가 같다는 성질로 역산한다. 생성 스크립트가 95개 시나리오 전체에서 충돌을 검사하고, 하나라도 어긋나면 중단한다. **`S[].mons`의 순서를 임의로 바꾸면 이름 매핑이 깨진다.**
 - 인원수는 `pc`(2/3/4)에 보관하고 `localStorage['gh-pc']`에 저장한다. 해당 인원수에서 0마리인 몬스터는 줄 자체를 그리지 않는다.
-- 타일 이미지는 jsDelivr로 worldhaven에서 불러온다(`TILE()`). 저장소에 이미지를 복사해 넣지 않는다. 로드 실패 시 `onerror`가 타일 ID 안내 박스로 대체한다.
+- 방 카드는 글 정보만 담는다. 타일 그림은 팝업 배치도에서 보여주므로 패널에 다시 넣지 않는다.
+- **클래스 이름 `e` 를 새로 쓰지 말 것.** `refresh()` 가 흐름도 엣지를 `#graph .e` 로 훑는다. 예전에 몬스터 정예 칩이 `.cnt.e` 였다가 `.e.fade`(opacity .15)에 걸려 거의 안 보였다. 지금은 `.cnt.elite` 다.
 
 ## 4-C. 헥스 배치도 데이터 (`const TIMG`, `const LAY`) — 생성물
 
@@ -233,7 +234,6 @@ const LAY={ "1": {
 - 요구 조건·몬스터·보상·해금 관계: [Gloomhaven Secretariat](https://github.com/Lurkars/gloomhavensecretariat) (AGPL-3.0) 데이터 기반.
 - 사이드 시나리오 해금 경로: [gloomhaven-storyline](https://github.com/teamducro/gloomhaven-storyline) 참고.
 - 방·타일·인원수별 몬스터 구성: Gloomhaven Secretariat 시나리오 JSON (AGPL-3.0).
-- 전투 준비 섹션의 타일 썸네일: [any2cards/worldhaven](https://github.com/any2cards/worldhaven)에서 jsDelivr로 불러온다(복사하지 않음).
 - **배치도의 타일 이미지(`assets/tiles/`)와 공식 시나리오 배치**: Cephalofair Games 의 [Creator Pack](https://boardgamegeek.com/thread/1733586/files-creation) 자산으로 **CC BY-NC-SA 4.0**이다. [Gloomhaven Line of Sight Tool](https://gloomhaven.one/)이 쓰는 것과 같은 파일이며, 비영리 팬 페이지에서 출처·라이선스를 밝히고 쓴다. **출처 표기를 지우지 말 것.**
 - 헥스 단위 몬스터·장애물 좌표: [Sebaestschjin/datahaven](https://github.com/Sebaestschjin/datahaven).
 - 한국어 시나리오명·줄거리는 이 페이지용 창작 요약.
