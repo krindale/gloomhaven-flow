@@ -77,7 +77,8 @@ function closeWorld(){
   const up=$('#panel').classList.contains('up');   // 시트로 보던 시나리오는 닫은 뒤 원래 패널로 이어 보여 준다
   noTrans($('#panel'),()=>{document.body.classList.remove('worldon');$('#panel').classList.remove('up','mini')});
   $('#worldwrap').classList.remove('on');
-  setPanel(up&&sel!=null);
+  // 지도에서는 탭과 상관없이 고를 수 있으므로, 이어 보여 줄 때는 그 시나리오가 있는 탭으로 옮겨 연다
+  if(up&&sel!=null) goScenario(sel); else setPanel(false);
   $('#worldbtn').focus();
 }
 
@@ -110,17 +111,19 @@ function worldPick(id){
   }
 }
 
-// 전역 업적 칸마다 붙일 스티커 하나. 같은 칸을 두고 갈리는 업적(도시 통치·목소리 등)은 나중 시나리오에서 얻은 쪽,
+// 전역 업적 칸마다 붙일 스티커 하나. 같은 칸을 두고 갈리는 업적(도시 통치·목소리 등)은 나중에 클리어한 시나리오에서 얻은 쪽,
 // 유물은 정화 > (잃었다가 되찾음) > 회수 > 상실, 고대 기술·오염 종식은 얻은 횟수만큼의 스티커(GAT3 등)
 function achStickers(){
+  // last[스티커 id] = 그 업적을 마지막으로 준 시나리오를 클리어한 순서. done 은 클리어한 순서대로 저장된다(Set 삽입 순서)
   const cnt=achievements(), last={};
-  [...done].sort((a,b)=>a-b).forEach(id=>S[id].rw.forEach(x=>{
-    const m=ACH_RE.exec(x); if(m&&m[1]==='전역'&&WACH.ko[m[2]]) last[WACH.ko[m[2]]]=id;}));
+  [...done].forEach((id,i)=>S[id].rw.forEach(x=>{
+    const m=ACH_RE.exec(x); if(m&&m[1]==='전역'&&WACH.ko[m[2]]) last[WACH.ko[m[2]]]=i+1;}));
   const has=a=>Object.entries(WACH.ko).some(([ko,id])=>id===a&&(cnt.get('전역|'+ko)||0)>0);
   const n=a=>{const ko=Object.keys(WACH.ko).find(k=>WACH.ko[k]===a);return cnt.get('전역|'+ko)||0};
   return WACH.slots.map(([cx,ids])=>{
     let pick=null;
-    if(ids[0]==='GAR') pick=has('GAC')?'GAC':has('GAR')&&has('GAL')?'GAR2':has('GAR')?'GAR':has('GAL')?'GAL':null;
+    // 유물: 정화가 최종. 회수·상실을 둘 다 가졌으면 나중에 얻은 쪽 — 상실 뒤 회수면 '잃었다가 되찾음'(GAR2), 회수 뒤 상실이면 상실
+    if(ids[0]==='GAR') pick=has('GAC')?'GAC':has('GAR')&&has('GAL')?(last.GAR>last.GAL?'GAR2':'GAL'):has('GAR')?'GAR':has('GAL')?'GAL':null;
     else if(ids.length>2&&ids[1]===ids[0]+'2'){const c=Math.min(ids.length,n(ids[0])); pick=c?ids[0]+(c>1?c:''):null}
     else pick=ids.filter(has).sort((a,b)=>(last[a]||0)-(last[b]||0)).pop()||null;
     return pick&&[cx,pick];
