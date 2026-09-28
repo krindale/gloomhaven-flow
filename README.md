@@ -23,12 +23,14 @@
 - **요구 조건·몬스터·보상·해금·차단 관계**: Gloomhaven Secretariat 오픈소스 데이터를 그대로 사용해 신뢰도가 높습니다.
 - **목표·특수 규칙**: 95개 전부 시나리오북 원문과 대조했습니다. 42번 이후 47개는 datahaven 에 연결된 시나리오북 페이지 스캔을 읽어 원문대로 고쳤습니다(33개의 목표가 바뀜). 번역은 이 페이지에서 옮긴 것이라 공식 한글판 문구와는 다를 수 있습니다.
 - **줄거리**: 메인 스토리는 원문 기반으로 작성. 사이드 시나리오는 스토리를 지어내지 않으려고 해금 경로·규칙 위주로만 짧게 적었습니다.
+- **시나리오 지역**(단검숲·코퍼넥 산맥 등, 개인 퀘스트용): gloomhaven-storyline 과 gloomhaven-online 데이터가 95개 전부 일치하는 값을 썼습니다. 여섯 지역 밖(도시 외곽·다른 차원 등) 시나리오 20개는 지역을 표시하지 않습니다. 지역 한글 이름도 이 페이지에서 옮긴 것이라 영문을 함께 적었습니다.
 - **한국어 시나리오명**: 공식 한글판 명칭이 아니라 이 페이지에서 옮긴 이름이라 실물 책과 다를 수 있습니다.
 
 ## 데이터 출처
 - 요구 조건·몬스터·보상·해금 관계: [Gloomhaven Secretariat](https://github.com/Lurkars/gloomhavensecretariat) 데이터 (AGPL-3.0)
 - 보물 상자 내용·아이템 이름: Gloomhaven Secretariat `treasures.json`·`items.json` (AGPL-3.0)
 - 사이드 시나리오 해금 경로 참고: [gloomhaven-storyline](https://github.com/teamducro/gloomhaven-storyline)
+- 시나리오 지역: [gloomhaven-storyline](https://github.com/teamducro/gloomhaven-storyline) `scenarios.json` 의 `region_ids`, [gloomhaven-online](https://github.com/carherco/gloomhaven-online) 과 대조
 - 헥스 단위 몬스터·장애물 좌표: [Sebaestschjin/datahaven](https://github.com/Sebaestschjin/datahaven)
 - 배치도의 맵 타일 이미지와 공식 시나리오 배치: Cephalofair Games [Creator Pack](https://boardgamegeek.com/thread/1733586/files-creation) (CC BY-NC-SA 4.0), [Gloomhaven Line of Sight Tool](https://gloomhaven.one/) 경유
 - 배치도의 몬스터 초상: Creator Pack (CC BY-NC-SA 4.0), [Gloomhaven Secretariat](https://github.com/Lurkars/gloomhavensecretariat) 경유
