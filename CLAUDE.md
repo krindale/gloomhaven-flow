@@ -5,24 +5,39 @@
 ## 1. 프로젝트 개요
 
 - **목적**: 글룸헤이븐 1판 시나리오 95개의 해금 관계·목표·요구 조건·몬스터·보상·줄거리를 한 페이지에서 추적한다.
-- **성격**: 빌드 없음, 의존성 없음, 서버 없음. `index.html` 하나가 앱 전체다.
+- **성격**: 빌드 없음, 의존성 없음, 서버 없음. `index.html` + `css/` `js/` `data/` 를 **일반 `<script src>`** 로 불러오는 정적 페이지다. **`index.html` 을 파일로 바로 열어도(`file://`) 동작해야 한다** — 그래서 ES 모듈(`type="module"`)·`fetch()`로 JSON 읽기를 쓰지 않는다(둘 다 `file://` 에서 막힌다).
 - **스포일러**: 전체 공개가 의도된 설계다. 스포일러 가리기 기능을 임의로 넣지 않는다. **예외: 보물 상자 내용**은 사용자 요청으로 잠가 두고 버튼(열어 보기/모두 열기)을 눌러야 보인다.
 - **언어**: UI·데이터·문서 모두 한국어(`<html lang="ko">`). 영문 시나리오명은 보조 표기로만 병기한다.
 
 ## 2. 파일 구조
 
 ```
-index.html              앱 전체 (CSS + 데이터 + 로직 인라인)
+index.html              마크업 + <head> 인라인 스크립트 2개(첫 페인트 전 테마 적용, 공개 주소 전용 애널리틱스) + 아래 파일을 순서대로 불러오는 태그
+css/app.css             스타일 전체. 테마 토큰(:root 3중 정의)이 맨 위
+data/scenarios.js       손으로 관리하는 데이터: const S(시나리오 95개) / L(흐름도 좌표·엣지) / SIDE(사이드 탭 분류)
+data/battle.js          생성물: const MON / MAP / TRS  ← tools/build_battle_data.py 가 파일 전체를 새로 쓴다
+data/layout.js          생성물: const LMON / MIMG / OVN / OIMG / OPARTS / TIMG / LAY  ← tools/build_map_layout.py
+js/util.js              $, esc, smooth, narrow, store(localStorage JSON 래퍼)
+js/state.js             저장값(done·choice·pc)과 상태 계산: chosen, unlocksVia, reachable, pendingPickSrc, cascadeUndo, achievements, reqState, blockedSet, statuses, STL, LOCEN, locDone, hasBoss
+js/graph.js             메인 흐름도 SVG(buildGraph), 확대(zoom·applyZoom·fit)
+js/side.js              사이드 카드 목록(buildSide), sizeSide
+js/treasure.js          보물 상자 섹션(treasureSec·itemCard·openTreasure)
+js/panel.js             상세 패널(renderPanel + 섹션 함수 reqsHtml/sourceHtml/pickBoxHtml/metaHtml), 정확도 안내(showInfo), 패널 클릭 위임, setPanel
+js/dialogs.js           팝업: 하나만 해금 선택(openPick/closePick), 초기화 확인(openReset/closeReset)
+js/map.js               헥스 배치도(헥스 기하 → 층별 SVG 함수 → mapSvg, mapLegend, openMap/closeMap/drawMap)
+js/maptip.js            배치도 마우스 오버 툴팁(mapHover)
+js/panzoom.js           드래그 이동·Shift+휠 확대(panZoom)
+js/app.js               sel·onlyOpen, select/deselect/goScenario/showView, 검색(HAY·matcher), refresh, 헤더·Esc 이벤트, 시작 호출 — 반드시 마지막
 README.md               공개용 설명과 데이터 출처 표기
 CLAUDE.md               이 문서
 tools/fetch_ghs.py      GHS 시나리오 JSON 1~95를 tools/ghs_cache/ 로 내려받음
-tools/build_battle_data.py  index.html 의 const MON/MAP 블록을 다시 생성
+tools/build_battle_data.py  data/battle.js 를 다시 생성 (data/scenarios.js 의 S 를 읽음)
 tools/ghs_cache/        GHS 원본 JSON 95개 (생성 입력값, 재현용으로 커밋)
 tools/ghs_meta/         GHS 보물 표·아이템 목록·스포일러 라벨 (TRS 생성 입력값). ghs_cache 에 넣지 말 것 — 그 폴더의 *.json 은 전부 시나리오로 읽힌다
 tools/extract_tile_shapes.py  gloomhaven.one 번들에서 타일 모양·이미지 정보와 공식 시나리오 배치를 추출
 tools/fetch_tile_images.py    타일 이미지를 assets/tiles/ 로 내려받고 원본 크기 기록
 tools/fetch_layouts.py        datahaven 배치 좌표를 tools/dh_cache/ 로 내려받음
-tools/build_map_layout.py     index.html 의 const LMON/MIMG/OVN/OIMG/TIMG/LAY 블록을 다시 생성
+tools/build_map_layout.py     data/layout.js 를 다시 생성 (data/scenarios.js 의 S 를 읽음)
 tools/fetch_token_images.py   몬스터 초상(GHS 썸네일)·오버레이 그림(VGB)을 assets/monsters, assets/overlays 로 받아 webp 변환
 tools/_emit.py                위 스크립트의 검증·인코딩 보조
 tools/tile_shapes.json        타일 60종의 헥스 모양·이미지·오프셋 + 공식 배치 95개 (생성물)
@@ -33,38 +48,42 @@ assets/overlays/*.webp        장애물·함정·보물 그림 33장 (Creator Pa
 assets/overlays/start.webp    시작 위치 토큰의 가운데 그림만 잘라 배경을 투명하게 만든 것 (fetch_token_images.py 가 생성). 회전하지 않고 헥스는 페이지가 그린다
 ```
 
-`tools/`는 **페이지 빌드 단계가 아니다.** 전투 준비 데이터를 다시 만들 때만 수동으로 돌린다. 배포는 여전히 `index.html`을 그대로 서빙한다.
+`tools/`는 **페이지 빌드 단계가 아니다.** 데이터를 다시 만들 때만 수동으로 돌린다. 두 생성 스크립트는 현재 캐시로 돌리면 `data/battle.js`·`data/layout.js` 를 바이트 단위로 똑같이 다시 만든다(바뀌면 입력이 바뀐 것).
 
 빌드 산출물·`package.json`·번들러·프레임워크가 **없다**. 추가하지 않는다.
 외부 리소스는 Google Fonts(Gowun Batang, IBM Plex Sans KR)와 Cloudflare Web Analytics 비콘(`static.cloudflareinsights.com`, 공개 주소에서만 로드, 토큰은 공개용) 뿐이다. 오프라인에서도 폰트만 대체되고 정상 동작해야 한다.
 
-## 3. index.html 내부 지도
+## 3. 코드 구조 규칙
 
-줄 번호는 변동되므로 아래 앵커 문자열로 찾는다.
+**불러오는 순서** (`index.html` 맨 아래): `data/scenarios.js` → `data/battle.js` → `data/layout.js` → `util` → `state` → `graph` → `side` → `treasure` → `panel` → `dialogs` → `map` → `maptip` → `panzoom` → `app`.
 
-| 영역 | 앵커 | 내용 |
+- 모든 파일은 일반 스크립트라 최상위 `const`/`let`/`function` 이 **전역 공유**된다. 이름이 겹치면 SyntaxError 로 페이지 전체가 멈추므로 새 전역 이름은 `grep` 으로 먼저 확인한다.
+- 파일을 불러오는 **그 순간 실행되는** 최상위 코드는 앞 파일의 것만 쓸 수 있다(데이터·`$`·`store` 등). 다른 파일의 함수는 이벤트 핸들러·함수 안에서만 부른다. 시작 호출(`buildGraph();buildSide();refresh();`)은 `app.js` 맨 끝에만 둔다.
+- 새 파일을 만들면 `index.html` 의 태그 순서와 위 목록, §2 를 함께 고친다. 배포 워크플로는 `css js data assets` 폴더째 복사하므로 폴더 안 파일은 따로 등록할 필요 없다.
+- 패널 안 버튼은 그릴 때마다 핸들러를 붙이지 않는다. `panel.js` 의 `#panel` 클릭 위임 하나가 `[data-go]`(시나리오 이동)·`.close`·`[data-tr]`/`[data-trall]`(보물)·`#openmap`·`.done-btn`·`[data-choose]` 를 처리한다. 새 버튼도 여기에 추가한다.
+- Esc 는 `app.js` 의 핸들러 하나가 맨 위 팝업부터 닫는다(초기화 → 하나만 해금 → 배치도).
+- localStorage 는 `store.get/set`(JSON)으로만 접근한다. 예외: `gh-theme` 은 head 인라인 스크립트가 JSON 이 아닌 문자열로 읽으므로 그대로 둔다.
+- 헥스 좌표 계산은 `map.js` 의 `HEX_R`·`COLW`·`ROWH`·`hexPx`·`hexCenter`·`hexPoly` 만 쓴다(툴팁도 같은 함수).
+
+| 찾을 것 | 파일 · 앵커 | 내용 |
 |---|---|---|
-| 테마 토큰 | `:root{` | CSS 변수. 다크가 기본, `prefers-color-scheme` + `data-theme` 오버라이드 3중 정의 |
-| 마크업 | `<header>` ~ `</main>` | 헤더(탭·검색·범례·진행도·테마), `#graph`/`#side` 뷰, `#panel` 상세 패널 |
-| 시나리오 데이터 | `const S=` | id 문자열 키 → 시나리오 객체 95개 (단일 행, 약 74KB) |
-| 레이아웃 데이터 | `const L=` | 메인 캠페인 그래프의 좌표·엣지 경로 (단일 행, 약 10KB) |
-| 사이드 그룹 | `const SIDE=` | 사이드 시나리오 분류와 체인 배열 |
-| 전투 준비 데이터 | `const MON=` / `const MAP=` / `const TRS=` | **생성물.** 손으로 고치지 말고 `tools/build_battle_data.py`로 다시 만든다 |
-| 보물 상자 | `function treasureSec(id)` / `openTreasure(b)` | `MAP[id].r[].tr` 번호별로 잠긴 줄을 그리고, 버튼을 누르면 `TRS`에서 내용을 꺼내 보여준다. 열림 상태는 저장하지 않는다. `G`는 시나리오 전용 보물(내용 없음) |
-| 배치도 버튼 | `id="openmap"` (`.mapbtn`, 아이콘 `HEXICON`) | 패널 오른쪽 위 × 옆 `.ph-act` 안의 헥스 아이콘 버튼. 제목에는 붙이지 않는다. 방별 구성 카드는 사용자 요청으로 제거했다 — **패널에 방 정보를 다시 넣지 않는다** |
-| 배치도 데이터 | `const LMON=` / `const MIMG=` / `const OVN=` / `const OIMG=` / `const TIMG=` / `const LAY=` | **생성물.** `tools/build_map_layout.py` 로만 갱신 |
-| 배치도 렌더 | `function mapSvg(id)` / `openMap(id)` | 팝업 `#mapwrap` > `.mapbox`. 헥스별 정보는 `mapCells`에 모아 두고 `mapHover()`가 마우스 위치의 헥스를 찾아 `#maptip` 툴팁·`#hxhov` 강조를 그린다. SVG `<title>`은 쓰지 않는다(기본 툴팁과 겹침) |
-| 보스 판정 | `hasBoss(id)` / `bossNames(id)` | `S[id].mons` 의 `b` 플래그. 노드에 ☠ 표시 |
-| 그래프 렌더 | `function buildGraph()` | `L`로 SVG 생성. 노드 크기 `NW=190, NH=62` |
-| 사이드 렌더 | `function buildSide()` | `SIDE`로 카드 목록 생성 |
-| 상세 패널 | `function renderPanel(id)` | `S[id]`의 모든 필드를 섹션별로 출력 |
-| 상태 갱신 | `function refresh()` | 클리어/막힘/선택/검색 상태를 클래스 토글로 반영 |
-| 진행 상태 계산 | `function statuses()` | done/open/req/blocked/ext/pick/locked 7상태. `choose` 출처는 `chosen(src)` 로 고른 것만 연다 |
-| 업적 집계 | `function achievements()` | 클리어한 시나리오 보상에서 업적 수를 센다 |
-| 정확도 안내 | `function showInfo()` | 헤더 ⓘ 버튼. `gv:0` 목록을 실시간 집계(0개면 숨김) |
-| 패널 하단 고지 | `function foot(s)` | `side`/`gv`에 따라 문구 분기 |
-| 드래그·Shift+휠 | `function panZoom(` | 마우스 드래그로 스크롤 이동(5px 넘게 움직이면 뒤따르는 클릭 무시), Shift+휠로 커서 기준 확대/축소. `#graph`·배치도 `#mapbody`에 적용, 사이드 `#side`는 드래그만(`panZoom(el)` 인자 생략 시 확대 없음). 선택 후 패널이 열리면 `revealSel()`이 가려진 노드·카드를 보이는 곳으로 스크롤한다. macOS는 Shift+휠이 `deltaX`로 오므로 둘 다 본다 |
-| 초기화 | `buildGraph();buildSide();refresh();` | 파일 최하단. 초기 줌은 폭 700px 미만이면 0.6, 아니면 0.72 |
+| 테마 토큰 | `css/app.css` `:root{` | CSS 변수. 다크가 기본, `prefers-color-scheme` + `data-theme` 오버라이드 3중 정의 |
+| 마크업 | `index.html` `<header>` ~ 팝업 3개 | 헤더(탭·검색·범례·진행도·테마), `#graph`/`#side` 뷰, `#zoomctl`, `#panel`, `#pickwrap`·`#resetwrap`·`#mapwrap` |
+| 보물 상자 | `js/treasure.js` | `MAP[id].r[].tr` 번호별로 잠긴 줄을 그리고, 버튼을 누르면 `TRS`에서 내용을 꺼내 보여준다. 열림 상태는 저장하지 않는다. `G`는 시나리오 전용 보물(내용 없음) |
+| 배치도 버튼 | `js/panel.js` `id="openmap"` (`.mapbtn`, `HEXICON`) | 패널 오른쪽 위 × 옆 `.ph-act` 안의 헥스 아이콘 버튼. 제목에는 붙이지 않는다. 방별 구성 카드는 사용자 요청으로 제거했다 — **패널에 방 정보를 다시 넣지 않는다** |
+| 배치도 렌더 | `js/map.js` `mapSvg(id)` | 층 순서: 타일 → 격자 → 문 → 오버레이 → 시작 헥스 → 몬스터 → 호위 대상 → 표식 → 방 라벨 → `#hxhov`. 헥스별 내용은 `mapCells`, 툴팁은 `js/maptip.js`. SVG `<title>`은 쓰지 않는다(기본 툴팁과 겹침) |
+| 보스 판정 | `js/state.js` `hasBoss(id)` / `bossNames(id)` | `S[id].mons` 의 `b` 플래그. 노드에 ☠ 표시 |
+| 그래프 렌더 | `js/graph.js` `buildGraph()` | `L`로 SVG 생성. 노드 크기 `NW=190, NH=62` |
+| 사이드 렌더 | `js/side.js` `buildSide()` | `SIDE`로 카드 목록 생성 |
+| 상세 패널 | `js/panel.js` `renderPanel(id)` | `S[id]`의 모든 필드를 섹션별로 출력. 그려진 시나리오는 `panelId` |
+| 상태 갱신 | `js/app.js` `refresh()` | 클리어/막힘/선택/검색 상태를 클래스 토글로 반영. 엣지는 `refreshEdges()` |
+| 검색 | `js/app.js` `HAY` / `matcher(q)` | 시나리오별 검색 문자열을 시작할 때 한 번 만든다. 번호는 완전 일치, 지역은 띄어쓰기 무시. 보물 내용은 넣지 않는다 |
+| 진행 상태 계산 | `js/state.js` `statuses()` | done/open/req/blocked/ext/pick/locked 7상태. 열림 판정은 `reachable(id)`, 고르기 대기는 `pendingPickSrc(id)` |
+| 업적 집계 | `js/state.js` `achievements()` | 클리어한 시나리오 보상에서 업적 수를 센다 |
+| 정확도 안내 | `js/panel.js` `showInfo()` | 헤더 ⓘ 버튼. `gv:0` 목록을 실시간 집계(0개면 숨김) |
+| 패널 하단 고지 | `js/panel.js` `foot(s)` | `side`/`gv`에 따라 문구 분기 |
+| 드래그·Shift+휠 | `js/panzoom.js` `panZoom(` | 마우스 드래그로 스크롤 이동(5px 넘게 움직이면 뒤따르는 클릭 무시), Shift+휠로 커서 기준 확대/축소. `#graph`·배치도 `#mapbody`에 적용, 사이드 `#side`는 드래그만(`panZoom(el)` 인자 생략 시 확대 없음). 선택 후 패널이 열리면 `revealSel()`(app.js)이 가려진 노드·카드를 보이는 곳으로 스크롤한다. macOS는 Shift+휠이 `deltaX`로 오므로 둘 다 본다 |
+| 시작 | `js/app.js` 맨 끝 | `buildGraph();buildSide();refresh();` 초기 줌은 폭 700px 미만이면 0.6, 아니면 0.72 |
 
 ## 4. 데이터 스키마 (`const S`)
 
@@ -104,7 +123,7 @@ assets/overlays/start.webp    시작 위치 토큰의 가운데 그림만 잘라
 
 ## 4-B. 전투 준비 데이터 (`const MON`, `const MAP`) — 생성물
 
-`tools/build_battle_data.py`가 GHS 원본에서 만들어 `index.html` 안의 생성 블록 주석 사이에 써 넣는다. **직접 편집 금지.**
+`tools/build_battle_data.py`가 GHS 원본에서 만들어 `data/battle.js` 전체를 새로 쓴다. **직접 편집 금지.**
 
 ```js
 const MON=["강도 궁수", ...]          // 58종. 인덱스로 참조
@@ -131,7 +150,7 @@ const MAP={ "1": {
 
 ## 4-C. 헥스 배치도 데이터 (`const TIMG`, `const LAY`) — 생성물
 
-`tools/build_map_layout.py` 가 만든다. **직접 편집 금지.**
+`tools/build_map_layout.py` 가 `data/layout.js` 전체를 새로 쓴다. **직접 편집 금지.**
 
 배치의 바탕은 [Gloomhaven Line of Sight Tool](https://gloomhaven.one/) 번들에 들어 있는 **공식 시나리오 배치 95개**다. 타일 이름·격자 위치·회전이 그대로라 타일이 정확히 맞물린다(95개 전 시나리오에서 타일 간 헥스 겹침 0건). 그 위에 datahaven 의 몬스터·장애물·보물 좌표를 얹는다.
 
@@ -225,20 +244,23 @@ const OIMG=["trap-spike", ...]         // OVN 과 같은 순서. assets/overlays
 ## 7. 작업 규칙
 
 - **HTML 주입 시 `esc()` 필수.** 데이터에서 온 모든 문자열은 `esc()`를 거친다. 새 필드를 패널에 추가할 때도 동일.
-- **단일 파일 유지.** CSS·JS를 별 파일로 쪼개지 않는다. 데이터를 외부 JSON으로 빼지 않는다(파일 열기만으로 동작해야 한다).
+- **`file://` 로 열어도 동작해야 한다.** 파일은 `css/`·`js/`·`data/` 로 나뉘어 있지만(§2·§3) 모두 일반 `<script src>`·`<link>` 로 불러온다. ES 모듈, `fetch()` 로 JSON 읽기, 번들러를 쓰지 않는다. 데이터는 `.json` 이 아니라 `const X=...;` 를 담은 `.js` 로 둔다.
+- **한 파일은 한 가지 일.** 새 기능은 맞는 `js/*.js` 에 넣고, 파일이 여러 역할을 하게 되면 나눈다(§3 규칙대로 순서 등록).
 - **CSS 변수로만 색을 쓴다.** 하드코딩된 hex를 새로 넣지 말고 `var(--brass)` 등을 쓴다. 라이트/다크 3중 정의를 모두 갱신한다.
 - **파란색 버튼을 쓰지 않는다.** 액션 강조는 `--brass`/`--moss` 계열을 쓴다.
-- 데이터 일괄 수정은 Python으로 `const S=` 행을 파싱→수정→직렬화하는 방식이 안전하다:
+- 데이터 일괄 수정은 Python으로 `data/scenarios.js` 의 `const S=` 행을 파싱→수정→직렬화하는 방식이 안전하다:
   ```python
   import re, json
-  h = open('index.html', encoding='utf-8').read()
+  h = open('data/scenarios.js', encoding='utf-8').read()
   m = re.search(r'const S=(\{.*?\});\n', h, re.S)
   S = json.loads(m.group(1))
   # ... 수정 ...
   h = h[:m.start(1)] + json.dumps(S, ensure_ascii=False) + h[m.end(1):]
-  open('index.html', 'w', encoding='utf-8').write(h)
+  open('data/scenarios.js', 'w', encoding='utf-8', newline='
+').write(h)
   ```
-- 커밋 전 확인: 브라우저로 `index.html`을 열어 ① 메인 탭 그래프가 어긋남 없이 그려지는지 ② 사이드 탭 ③ 노드 클릭 시 패널 ④ 검색(번호/이름/몬스터) ⑤ 클리어 체크 후 새로고침 유지 ⑥ 테마 전환 ⑦ 좁은 폭(모바일) 레이아웃.
+- 커밋 전 확인: 브라우저로 `index.html`을 열어(파일로 직접 한 번, 로컬 서버로 한 번) ① 메인 탭 그래프가 어긋남 없이 그려지는지 ② 사이드 탭 ③ 노드 클릭 시 패널 ④ 검색(번호/이름/지역/몬스터) ⑤ 클리어 체크 후 새로고침 유지 ⑥ 테마 전환 ⑦ 좁은 폭(모바일) 레이아웃 ⑧ 배치도·보물·초기화 팝업. 콘솔에 에러가 없어야 한다(전역 이름 충돌은 페이지 전체를 멈춘다).
+- 구조를 바꾸는 리팩터링은 헤드리스 크롬으로 바꾸기 전·후의 렌더 결과(흐름도·사이드·여러 패널·배치도 innerHTML, 클릭 조작 뒤 상태)를 떠서 비교한다. 2026-09-28 파일 분리 때 이 방법으로 원본과 완전히 같음을 확인했다.
 
 ## 8. 배포 (Cloudflare Workers)
 
@@ -246,10 +268,10 @@ const OIMG=["trap-spike", ...]         // OVN 과 같은 순서. assets/overlays
 GitHub Pages 는 2026-09-28 사용자 요청으로 껐다(`.nojekyll` 도 삭제). 다시 켜지 않는다.
 
 - URL: https://gloomhaven-flow.krindale.workers.dev — carnegie-setup-helper 와 같은 구성
-- `.github/workflows/deploy-cloudflare.yml`: `index.html` + `assets/` 만 `dist/` 로 복사 → `wrangler deploy`(4.135.0 고정). 페이지 빌드가 아니라 복사일 뿐이다. `dist/`·`.wrangler/` 는 gitignore.
+- `.github/workflows/deploy-cloudflare.yml`: `index.html` + `css/ js/ data/ assets/` 만 `dist/` 로 복사 → `wrangler deploy`(4.135.0 고정). 페이지 빌드가 아니라 복사일 뿐이다. `dist/`·`.wrangler/` 는 gitignore.
 - `wrangler.jsonc`: `assets.directory = ./dist`. 저장소 루트를 올리면 `tools/`·`.git` 까지 올라가므로 바꾸지 않는다.
 - 저장소 시크릿 `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`(`gh secret list -R krindale/gloomhaven-flow`). 토큰은 사용자가 직접 등록한다. `!` 로 `gh secret set` 을 실행하면 입력 창이 없어 빈 값이 들어가니 별도 터미널에서 넣게 한다.
-- 로컬 점검: `mkdir dist && cp index.html dist/ && cp -r assets dist/ && npx -y wrangler@4.135.0 deploy --dry-run` (파일 약 160개가 정상).
+- 로컬 점검: `mkdir dist && cp index.html dist/ && cp -r css js data assets dist/ && npx -y wrangler@4.135.0 deploy --dry-run` (파일 약 180개가 정상). 끝나면 `dist/` 삭제.
 - 상태 확인: `gh run list -R krindale/gloomhaven-flow --workflow deploy-cloudflare.yml`
 
 ## 9. 정확도 정책 (사용자 확정 사항)
