@@ -17,6 +17,7 @@ css/app.css             스타일 전체. 테마 토큰(:root 3중 정의)이 �
 data/scenarios.js       손으로 관리하는 데이터: const S(시나리오 95개) / L(흐름도 좌표·엣지) / SIDE(사이드 탭 분류)
 data/battle.js          생성물: const MON / MAP / TRS  ← tools/build_battle_data.py 가 파일 전체를 새로 쓴다
 data/layout.js          생성물: const LMON / MIMG / OVN / OIMG / OPARTS / TIMG / LAY  ← tools/build_map_layout.py
+data/world.js           생성물: const WMAP / WPOS / WSTK / WACH (지도 크기, 인쇄 번호 자리, 시나리오 스티커 기준점, 전역 업적 칸)  ← tools/build_world_map.py
 js/util.js              $, esc, smooth, narrow, store(localStorage JSON 래퍼)
 js/state.js             저장값(done·choice·pc)과 상태 계산: chosen, unlocksVia, reachable, pendingPickSrc, cascadeUndo, achievements, reqState, blockedSet, statuses, STL, LOCEN, locDone, hasBoss
 js/graph.js             메인 흐름도 SVG(buildGraph), 확대(zoom·applyZoom·fit)
@@ -27,6 +28,7 @@ js/dialogs.js           팝업: 하나만 해금 선택(openPick/closePick), 초
 js/map.js               헥스 배치도(헥스 기하 → 층별 SVG 함수 → mapSvg, mapLegend, openMap/closeMap/drawMap)
 js/maptip.js            배치도 마우스 오버 툴팁(mapHover)
 js/panzoom.js           드래그 이동·Shift+휠 확대(panZoom)
+js/world.js             캠페인 지도 팝업(openWorld/closeWorld, buildWorld·refreshWorld, 스티커·전역 업적 스티커, 요약 카드). 처음 열 때 만든다
 js/app.js               sel·onlyOpen, select/deselect/goScenario/showView, 검색(HAY·matcher), refresh, 헤더·Esc 이벤트, 시작 호출 — 반드시 마지막
 README.md               공개용 설명과 데이터 출처 표기
 CLAUDE.md               이 문서
@@ -38,6 +40,8 @@ tools/extract_tile_shapes.py  gloomhaven.one 번들에서 타일 모양·이미�
 tools/fetch_tile_images.py    타일 이미지를 assets/tiles/ 로 내려받고 원본 크기 기록
 tools/fetch_layouts.py        datahaven 배치 좌표를 tools/dh_cache/ 로 내려받음
 tools/build_map_layout.py     data/layout.js 를 다시 생성 (data/scenarios.js 의 S 를 읽음)
+tools/build_world_map.py      지도·스티커 그림을 받아 assets/map/·assets/stickers/·data/world.js 를 다시 생성. 동그라미는 허프 검출, 번호는 사람이 읽은 LABELS, 스티커 기준점 오검출은 STK_FIX
+tools/world_cache/            캠페인 지도 원본 jpg + stickers/ 원본 png 218장 (gloomhaven-storyline 경유, 생성 입력값)
 tools/fetch_token_images.py   몬스터 초상(GHS 썸네일)·오버레이 그림(VGB)을 assets/monsters, assets/overlays 로 받아 webp 변환
 tools/_emit.py                위 스크립트의 검증·인코딩 보조
 tools/tile_shapes.json        타일 60종의 헥스 모양·이미지·오프셋 + 공식 배치 95개 (생성물)
@@ -45,6 +49,8 @@ tools/dh_cache/               datahaven 원본 JSON 95개
 assets/tiles/*.webp           맵 타일 이미지 62장 (Creator Pack, CC BY-NC-SA 4.0)
 assets/monsters/*.webp        몬스터 초상 47장 (Creator Pack, GHS 경유). 파일명 = datahaven 몬스터 slug
 assets/overlays/*.webp        장애물·함정·보물 그림 33장 (Creator Pack, VGB 경유). 꼭짓점이 위인 헥스라 90° 돌려 그린다
+assets/map/gloomhaven.webp    캠페인 지도 (Cephalofair, CC BY-NC-SA 4.0, gloomhaven-storyline 경유)
+assets/stickers/*.webp        시나리오 스티커 s<id>.webp(해금)·s<id>_c.webp(클리어 체크) 190장 + 전역 업적 스티커 28장(G*.webp, 0.5배로 줄여 저장). 출처 같음
 assets/overlays/start.webp    시작 위치 토큰의 가운데 그림만 잘라 배경을 투명하게 만든 것 (fetch_token_images.py 가 생성). 회전하지 않고 헥스는 페이지가 그린다
 ```
 
@@ -55,20 +61,20 @@ assets/overlays/start.webp    시작 위치 토큰의 가운데 그림만 잘라
 
 ## 3. 코드 구조 규칙
 
-**불러오는 순서** (`index.html` 맨 아래): `data/scenarios.js` → `data/battle.js` → `data/layout.js` → `util` → `state` → `graph` → `side` → `treasure` → `panel` → `dialogs` → `map` → `maptip` → `panzoom` → `app`.
+**불러오는 순서** (`index.html` 맨 아래): `data/scenarios.js` → `data/battle.js` → `data/layout.js` → `data/world.js` → `util` → `state` → `graph` → `side` → `treasure` → `panel` → `dialogs` → `map` → `maptip` → `panzoom` → `world` → `app`.
 
 - 모든 파일은 일반 스크립트라 최상위 `const`/`let`/`function` 이 **전역 공유**된다. 이름이 겹치면 SyntaxError 로 페이지 전체가 멈추므로 새 전역 이름은 `grep` 으로 먼저 확인한다.
 - 파일을 불러오는 **그 순간 실행되는** 최상위 코드는 앞 파일의 것만 쓸 수 있다(데이터·`$`·`store` 등). 다른 파일의 함수는 이벤트 핸들러·함수 안에서만 부른다. 시작 호출(`buildGraph();buildSide();refresh();`)은 `app.js` 맨 끝에만 둔다.
 - 새 파일을 만들면 `index.html` 의 태그 순서와 위 목록, §2 를 함께 고친다. 배포 워크플로는 `css js data assets` 폴더째 복사하므로 폴더 안 파일은 따로 등록할 필요 없다.
 - 패널 안 버튼은 그릴 때마다 핸들러를 붙이지 않는다. `panel.js` 의 `#panel` 클릭 위임 하나가 `[data-go]`(시나리오 이동)·`.close`·`[data-tr]`/`[data-trall]`(보물)·`#openmap`·`.done-btn`·`[data-choose]` 를 처리한다. 새 버튼도 여기에 추가한다.
-- Esc 는 `app.js` 의 핸들러 하나가 맨 위 팝업부터 닫는다(초기화 → 하나만 해금 → 배치도).
+- Esc 는 `app.js` 의 핸들러 하나가 맨 위 팝업부터 닫는다(초기화 → 하나만 해금 → 배치도 → 지도 위 시트 → 캠페인 지도).
 - localStorage 는 `store.get/set`(JSON)으로만 접근한다. 예외: `gh-theme` 은 head 인라인 스크립트가 JSON 이 아닌 문자열로 읽으므로 그대로 둔다.
 - 헥스 좌표 계산은 `map.js` 의 `HEX_R`·`COLW`·`ROWH`·`hexPx`·`hexCenter`·`hexPoly` 만 쓴다(툴팁도 같은 함수).
 
 | 찾을 것 | 파일 · 앵커 | 내용 |
 |---|---|---|
 | 테마 토큰 | `css/app.css` `:root{` | CSS 변수. 다크가 기본, `prefers-color-scheme` + `data-theme` 오버라이드 3중 정의 |
-| 마크업 | `index.html` `<header>` ~ 팝업 3개 | 헤더(탭·검색·범례·진행도·테마), `#graph`/`#side` 뷰, `#zoomctl`, `#panel`, `#pickwrap`·`#resetwrap`·`#mapwrap` |
+| 마크업 | `index.html` `<header>` ~ 팝업 4개 | 헤더 한 줄: 제목 · 탭 · 검색 · `.hstat`(진행도 막대·▶ 진행 가능) · `.hact`(지도·◐ 아이콘 `.hbtn`). 좁은 화면(≤860px)은 3줄 그리드. 소개·정확도 안내 `#info`(`.infobtn`, ⓘ 아이콘만)는 `#stage` 오른쪽 위, 범례는 `#stage` 왼쪽 아래 접이식 `#legend`(선 종류 줄 `.edges` 는 흐름도 탭에서만). `#graph`/`#side` 뷰, `#zoomctl`, `#panel`, `#pickwrap`·`#resetwrap`·`#mapwrap`·`#worldwrap` |
 | 보물 상자 | `js/treasure.js` | `MAP[id].r[].tr` 번호별로 잠긴 줄을 그리고, 버튼을 누르면 `TRS`에서 내용을 꺼내 보여준다. 열림 상태는 저장하지 않는다. `G`는 시나리오 전용 보물(내용 없음) |
 | 배치도 버튼 | `js/panel.js` `id="openmap"` (`.mapbtn`, `HEXICON`) | 패널 오른쪽 위 × 옆 `.ph-act` 안의 헥스 아이콘 버튼. 제목에는 붙이지 않는다. 방별 구성 카드는 사용자 요청으로 제거했다 — **패널에 방 정보를 다시 넣지 않는다** |
 | 배치도 렌더 | `js/map.js` `mapSvg(id)` | 층 순서: 타일 → 격자 → 문 → 오버레이 → 시작 헥스 → 몬스터 → 호위 대상 → 표식 → 방 라벨 → `#hxhov`. 헥스별 내용은 `mapCells`, 툴팁은 `js/maptip.js`. SVG `<title>`은 쓰지 않는다(기본 툴팁과 겹침) |
@@ -80,9 +86,10 @@ assets/overlays/start.webp    시작 위치 토큰의 가운데 그림만 잘라
 | 검색 | `js/app.js` `HAY` / `matcher(q)` | 시나리오별 검색 문자열을 시작할 때 한 번 만든다. 번호는 완전 일치, 지역은 띄어쓰기 무시. 보물 내용은 넣지 않는다 |
 | 진행 상태 계산 | `js/state.js` `statuses()` | done/open/req/blocked/ext/pick/locked 7상태. 열림 판정은 `reachable(id)`, 고르기 대기는 `pendingPickSrc(id)` |
 | 업적 집계 | `js/state.js` `achievements()` | 클리어한 시나리오 보상에서 업적 수를 센다 |
-| 정확도 안내 | `js/panel.js` `showInfo()` | 헤더 ⓘ 버튼. `gv:0` 목록을 실시간 집계(0개면 숨김) |
+| 정확도 안내 | `js/panel.js` `showInfo()` | 흐름도·사이드 화면 오른쪽 위 ⓘ `#info`. 프로젝트 소개(무엇·할 수 있는 것·알아 둘 것·출처)가 중심이고 정확도는 맨 아래 접이식 `details.infoacc`(사용자 요청: 'i 는 프로젝트 전체 설명'). `gv:0` 목록을 실시간 집계(0개면 숨김) |
 | 패널 하단 고지 | `js/panel.js` `foot(s)` | `side`/`gv`에 따라 문구 분기 |
-| 드래그·Shift+휠 | `js/panzoom.js` `panZoom(` | 마우스 드래그로 스크롤 이동(5px 넘게 움직이면 뒤따르는 클릭 무시), Shift+휠로 커서 기준 확대/축소. `#graph`·배치도 `#mapbody`에 적용, 사이드 `#side`는 드래그만(`panZoom(el)` 인자 생략 시 확대 없음). 선택 후 패널이 열리면 `revealSel()`(app.js)이 가려진 노드·카드를 보이는 곳으로 스크롤한다. macOS는 Shift+휠이 `deltaX`로 오므로 둘 다 본다 |
+| 드래그·Shift+휠 | `js/panzoom.js` `panZoom(` | 마우스 드래그로 스크롤 이동(5px 넘게 움직이면 뒤따르는 클릭 무시), Shift+휠로 커서 기준 확대/축소. `#graph`·캠페인 지도 `#world`·배치도 `#mapbody`에 적용, 사이드 `#side`는 드래그만(`panZoom(el)` 인자 생략 시 확대 없음). 선택 후 패널이 열리면 `revealSel()`(app.js)이 가려진 노드·카드를 보이는 곳으로 스크롤한다. macOS는 Shift+휠이 `deltaX`로 오므로 둘 다 본다 |
+| 캠페인 지도 | `js/world.js` `openWorld()` | 헤더 `#worldbtn` → 팝업 `#worldwrap`. 층: 지도 그림 → 전역 업적 스티커(`#wach`) → 시나리오 스티커(`#wstk .wsk`) → 상태 고리(`.wm`). 스티커는 스티커 안 번호 동그라미(`WSTK` cx,cy)를 `WPOS`에 겹쳐 1:1 로 붙인다. 해금(open·req·해금 후 막힘)이면 스티커, 클리어면 체크된 `_c` 스티커, 잠김이면 없음. 클리어면 스티커 번호 위에 초록 원+번호(`.wm.done`)도 올린다(스티커만으로는 체크 표시가 작아 안 보인다는 사용자 피드백). 표식은 `--wk`(=max(1, .55/wz))배로 키워 전체 보기에서도 보이게 하고, 그 배율(wz<.55, `#wsvg.small`)에선 클리어가 아닌 시나리오 번호도 같은 크기의 종이색 배지(`--paper`/`--ink`)로 올린다(사용자 요청). 팝업은 `fitWorld()`가 화면에 들어가는 최대 배율로 지도 전체를 보이게 하고 상자를 지도 크기에 맞춰 줄인다(머리줄·범례 한 줄 높이를 빼고 계산, 창 크기 바뀌면 다시 맞춤). 머리줄의 `#wfull` 은 전체화면(`#worldwrap.full` + 지원하면 `documentElement.requestFullscreen()` — 팝업만 전체화면으로 하면 하나만 해금 팝업이 가려진다). 닫거나 브라우저에서 풀리면(`fullscreenchange`) 원래 크기. `.wm` 상태 클래스는 `refresh()`가 `.n`과 같은 규칙으로 토글, 선택은 패널과 같은 `sel`. 전역 업적은 `achStickers()`가 칸마다 하나를 고른다(같은 칸 경쟁은 나중 시나리오 쪽, 유물은 정화>되찾음>회수>상실, 고대 기술·오염 종식은 횟수 스티커). 업적 스티커에 마우스를 올리면(터치는 탭) `#wtip` 에 한글·영문 이름, 얻은 시나리오, 이 업적이 필요한/있으면 막히는 시나리오를 보인다(`achTipHtml`, 영문명은 `WACH.en`). 스티커·번호를 누르면 `worldPick()`→`select()` 로 상세 패널이 **지도 위 바텀 시트**로 올라온다: 지도를 여는 동안 `body.worldon` 이고 `setPanel()` 은 `#panel.up` 만 토글(CSS `body.worldon aside#panel`). 시트 안의 클리어 체크·배치도(`#mapwrap` z 55 > 시트 52 > 지도 50)·링크가 그대로 동작하고, 링크(`goScenario`)는 지도에서 그 번호로 옮겨 간다. 시트에서 배치도를 열면 시트를 제목 줄만 남기고 접는다(`.mini`, 누르면 펼침). 옆 패널이 열려 있을 때 지도를 열면 팝업은 바로 가운데에 뜨고(살짝 커지며 나타남) 패널은 동시에 오른쪽(좁은 화면은 아래)으로 닫힌다(사용자 요청). 패널을 시트 모드(`body.worldon`)로 바꾸는 `worldonNow()` 는 그 전환이 끝난 뒤(290/230ms) 또는 그 전에 번호를 누르면 즉시. 옆 패널 ↔ 시트로 모양이 바뀌는 순간은 `noTrans()`로 애니메이션을 끈다. 지도 빈 곳·Esc 는 시트부터 내리고, 시트를 올린 채 지도를 닫으면 원래 패널로 이어 보인다 |
 | 시작 | `js/app.js` 맨 끝 | `buildGraph();buildSide();refresh();` 초기 줌은 폭 700px 미만이면 0.6, 아니면 0.72 |
 
 ## 4. 데이터 스키마 (`const S`)
@@ -230,10 +237,11 @@ const OIMG=["trap-spike", ...]         // OVN 과 같은 순서. assets/overlays
 |---|---|---|
 | `localStorage['gh-done']` | 클리어한 시나리오 id 배열(JSON) | `done` Set으로 로드. try/catch로 감싸 실패해도 동작 |
 | `localStorage['gh-choice']` | `{"13": 17}` | '하나만 해금'에서 고른 시나리오. try/catch |
+| `localStorage['gh-legend']` | `true` \| `false` | 범례 펼침 여부. 없으면 넓은 화면은 펼침, 좁은 화면은 접힘. 사용자가 눌렀을 때만 저장 |
 | `localStorage['gh-theme']` | `"light"` \| `"dark"` | `documentElement.dataset.theme`에 반영. **저장값이 없으면 시스템 설정과 무관하게 다크**(head 의 인라인 스크립트가 첫 페인트 전에 적용) |
 
 - 서버 저장·계정·동기화 없음. 사파리 프라이빗 모드 등에서 읽기/쓰기가 던질 수 있으므로 **모든 접근은 try/catch를 유지한다.**
-- **상세 패널은 저장하지 않는다.** 닫힌 채 시작 → 노드/카드를 누르면 열림 → 빈 곳 클릭(`deselect()`)·× 버튼·다른 탭으로 전환하면 닫힘. 헤더 ▤ 버튼으로 수동 토글. 넓은 화면은 `.off`(슬라이드), 좁은 화면은 바텀시트 `.open`.
+- **상세 패널은 저장하지 않는다.** 닫힌 채 시작 → 노드/카드를 누르면 열림 → 빈 곳 클릭(`deselect()`)·× 버튼·다른 탭으로 전환하면 닫힘(헤더의 수동 토글 ▤ 버튼과 빈 패널 안내문은 2026-09-29 헤더 정리 때 없앴다). 넓은 화면은 `.off`(슬라이드), 좁은 화면은 바텀시트 `.open`.
 - 사이드 탭은 넓은 화면에서 `#side>*` 폭을 `--sidew`(패널 닫힌 기준, `sizeSide()`)로 고정해 패널이 열려도 카드 배치가 바뀌지 않는다. 가려진 부분은 가로 스크롤.
 - 선택 중에도 진행 흐름 엣지(`.e.next`)는 `.e.fade.next`(opacity .45)로 흐리게 남긴다.
 - **하나만 해금**(`S[id].choose`, GHS `chooseLocation` — 1판에서는 #13 뿐): #13 패널에서 고른 값을 `localStorage['gh-choice']` = `{"13":17}` 로 저장. 고를 수 있는 후보는 흐름도에서 `.n.pick`(청록 채움·두꺼운 테두리·깜빡임·'고르기' 표시)과 `.e.pickable` 선으로 강조하고, 후보 패널에서도 '이 시나리오로 고르기'로 바로 고른다. #13 을 클리어 체크하면 선택 팝업(`openPick(src,true)`)이 뜨고 **하나를 골라야 클리어가 확정**된다(취소·Esc 는 클리어하지 않음). #13 클리어를 해제하면 `choice[13]` 도 지워 다시 클리어할 때 새로 고른다. #13 패널의 고르는 칸(`pickBox`)은 클리어 버튼 바로 아래. 클리어 해제 시 `cascadeUndo()`가 더 이상 열릴 수 없는 뒤쪽 시나리오의 클리어도 연쇄 해제한다(글로 적힌 다른 해금 경로가 있는 시나리오는 제외). 고르지 않았어도 후보 중 하나를 클리어했으면 그것을 고른 것으로 보되, 다른 경로로 열렸을 수 있어 언제든 바꿀 수 있다. 고르지 않은 후보는 다른 경로(#39→15, #37 보물→17, #7→20)가 없으면 잠김. 고르지 않은 쪽 점선 엣지는 `.e.nopick`.
@@ -276,7 +284,7 @@ GitHub Pages 는 2026-09-28 사용자 요청으로 껐다(`.nojekyll` 도 삭제
 
 ## 9. 정확도 정책 (사용자 확정 사항)
 
-페이지에 표시되는 신뢰도 구분은 아래가 기준이다. 헤더 **ⓘ 정확도** 버튼(`showInfo()`)과 README, 각 시나리오 패널 하단 `foot(s)`가 이 내용을 그대로 반영한다. 셋을 고칠 때는 함께 고친다.
+페이지에 표시되는 신뢰도 구분은 아래가 기준이다. 화면 오른쪽 위 **ⓘ** 버튼(`showInfo()`, 프로젝트 소개 맨 아래 접이식 정확도 칸)과 README, 각 시나리오 패널 하단 `foot(s)`가 이 내용을 그대로 반영한다. 셋을 고칠 때는 함께 고친다.
 
 | 항목 | 신뢰도 | 근거 |
 |---|---|---|
@@ -298,6 +306,7 @@ GitHub Pages 는 2026-09-28 사용자 요청으로 껐다(`.nojekyll` 도 삭제
 - 보물 상자 내용·아이템 이름: Gloomhaven Secretariat `treasures.json`·`items.json` (AGPL-3.0).
 - **배치도의 타일 이미지(`assets/tiles/`)와 공식 시나리오 배치**: Cephalofair Games 의 [Creator Pack](https://boardgamegeek.com/thread/1733586/files-creation) 자산으로 **CC BY-NC-SA 4.0**이다. [Gloomhaven Line of Sight Tool](https://gloomhaven.one/)이 쓰는 것과 같은 파일이며, 비영리 팬 페이지에서 출처·라이선스를 밝히고 쓴다. **출처 표기를 지우지 말 것.**
 - 헥스 단위 몬스터·장애물 좌표: [Sebaestschjin/datahaven](https://github.com/Sebaestschjin/datahaven).
+- **캠페인 지도 그림(`assets/map/`)**: Cephalofair Games 원본(CC BY-NC-SA 4.0 로 보고 사용). Creator Pack 에서 원본을 찾지 못해 [gloomhaven-storyline](https://github.com/teamducro/gloomhaven-storyline)(README 에 CC BY-NC-SA 4.0 명시) 저장소 파일을 받았다(2026-09-29 사용자 결정). 시나리오·전역 업적 스티커 그림(`assets/stickers/`)도 storyline 저장소의 것(같은 라이선스)이다(2026-09-29 사용자 요청: '스토리라인에 다 있는 스티커를 써라'). 팝업의 '출처·라이선스'와 README 출처 표기를 지우지 말 것. 시나리오 좌표는 storyline 것을 쓰지 않고 그림에서 직접 찾았다.
 - 배치도 몬스터 초상·오버레이 그림: 역시 Creator Pack(CC BY-NC-SA 4.0). 몬스터는 [GHS](https://github.com/Lurkars/gloomhavensecretariat) 썸네일, 오버레이는 [Virtual Gloomhaven Board](https://github.com/PurpleKingdomGames/virtual-gloomhaven-board) 경유. **[worldhaven](https://github.com/any2cards/worldhaven) 그림은 제3자 재사용 금지라 쓰지 않는다.**
 - 한국어 시나리오명·줄거리는 이 페이지용 창작 요약.
 - Gloomhaven은 Cephalofair Games 상표. 비공식 팬 페이지이며 README의 출처·상표 표기를 제거하지 않는다.

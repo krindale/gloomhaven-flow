@@ -3,9 +3,10 @@
 95개 시나리오의 해금 관계, 목표, 요구 조건, 몬스터, 보상, 줄거리를 한 페이지에서 보는 인터랙티브 흐름도입니다. 스포일러가 전부 포함되어 있습니다.
 
 - **메인 캠페인** 탭: 1~51번 흐름도 / **사이드** 탭: 52~95번 목록 — 합쳐서 95개 전부
+- **캠페인 지도** (헤더의 지도 버튼, 팝업): 실물처럼 원본 캠페인 지도에 스티커를 붙여 보여 줍니다. 해금된 시나리오는 스티커, 클리어한 곳은 체크된 스티커, 지금 진행할 수 있는 곳은 황동색 고리, 막힌 곳은 붉은 ✕. 지도 위쪽 **Global Achievements** 칸에는 얻은 전역 업적 스티커가 제자리에 붙습니다
 - 클리어 체크는 브라우저 localStorage에 저장 (서버 저장·계정 없음)
 - 클리어하면 **지금 진행할 수 있는 시나리오**가 황동색 ▶ 표시로 켜지고, 잠긴 것은 흐려집니다. 헤더의 **▶ 진행 가능 N**을 누르면 그것만 볼 수 있습니다
-- 헤더의 **ⓘ 정확도** 버튼에 어디까지 믿어도 되는지 정리해 두었습니다
+- 화면 오른쪽 위 **ⓘ** 버튼에 이 페이지 소개·사용법과 함께 어디까지 믿어도 되는지 정리해 두었습니다
 - **🗺 헥스 배치도** (패널 제목 옆 버튼): 실제 맵 타일 이미지로 그린 시나리오 지도 위에 몬스터·장애물·함정·보물·문·시작 헥스를 헥스 단위로 표시합니다. 2/3/4인 전환, 헥스에 마우스를 올리면 그 칸의 정보가 나옵니다 (94개 시나리오, 팝업)
 - 각 시나리오의 **보물 상자**: 방별 보물 번호가 잠긴 채로 나오고, **열어 보기**를 눌러야 내용(아이템·금화·함정·해금 시나리오 등)이 보입니다
 - 보스가 나오는 시나리오는 흐름도에 **☠** 로 표시됩니다 (24개)
@@ -35,6 +36,7 @@
 - 배치도의 맵 타일 이미지와 공식 시나리오 배치: Cephalofair Games [Creator Pack](https://boardgamegeek.com/thread/1733586/files-creation) (CC BY-NC-SA 4.0), [Gloomhaven Line of Sight Tool](https://gloomhaven.one/) 경유
 - 배치도의 몬스터 초상: Creator Pack (CC BY-NC-SA 4.0), [Gloomhaven Secretariat](https://github.com/Lurkars/gloomhavensecretariat) 경유
 - 배치도의 장애물·함정·보물 그림: Creator Pack (CC BY-NC-SA 4.0), [Virtual Gloomhaven Board](https://github.com/PurpleKingdomGames/virtual-gloomhaven-board) 경유
+- 캠페인 지도 그림과 시나리오·전역 업적 스티커: © Cephalofair Games (CC BY-NC-SA 4.0), [gloomhaven-storyline](https://github.com/teamducro/gloomhaven-storyline) 경유. 시나리오 위치는 지도에 인쇄된 번호 동그라미를 직접 찾아 읽은 것
 - 한국어 시나리오명·줄거리 요약은 이 페이지용으로 새로 작성
 
 Gloomhaven은 Cephalofair Games의 상표입니다. 비공식 팬 제작 페이지입니다.

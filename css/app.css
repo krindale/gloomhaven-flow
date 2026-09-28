@@ -1,7 +1,7 @@
 :root{
   --bg:#262e32; --panel:#2f383d; --panel2:#374247; --line:#4a565c;
   --text:#ece4d4; --muted:#a9afa9; --brass:#d3a54e; --blood:#c4574a; --moss:#86ac70; --frost:#8fb8c9;
-  --node:#323c41; --nodeText:#ece4d4; --shadow:0 1px 0 rgba(0,0,0,.35); --edge:#7d8a8f; color-scheme:dark;
+  --node:#323c41; --nodeText:#ece4d4; --shadow:0 1px 0 rgba(0,0,0,.35); --edge:#7d8a8f; --paper:#f3e9d2; --ink:#2b2219; color-scheme:dark;
   box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
   --serif:"Gowun Batang","Nanum Myeongjo","Apple SD Gothic Neo",serif;
   --sans:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
@@ -9,39 +9,62 @@
 @media (prefers-color-scheme: light){ :root:not([data-theme="dark"]){
   --bg:#e7eae8; --panel:#f5f5f1; --panel2:#ecede8; --line:#c4c9c5;
   --text:#20282b; --muted:#5d6663; --brass:#a4731c; --blood:#a83a2e; --moss:#4f7a3c; --frost:#3f7a90;
-  --node:#fbfaf6; --nodeText:#20282b; --shadow:0 1px 0 rgba(0,0,0,.08); --edge:#8d9793; color-scheme:light;
+  --node:#fbfaf6; --nodeText:#20282b; --shadow:0 1px 0 rgba(0,0,0,.08); --edge:#8d9793; --paper:#f3e9d2; --ink:#2b2219; color-scheme:light;
 }}
 :root[data-theme="light"]{
   --bg:#e7eae8; --panel:#f5f5f1; --panel2:#ecede8; --line:#c4c9c5;
   --text:#20282b; --muted:#5d6663; --brass:#a4731c; --blood:#a83a2e; --moss:#4f7a3c; --frost:#3f7a90;
-  --node:#fbfaf6; --nodeText:#20282b; --shadow:0 1px 0 rgba(0,0,0,.08); --edge:#8d9793; color-scheme:light;
+  --node:#fbfaf6; --nodeText:#20282b; --shadow:0 1px 0 rgba(0,0,0,.08); --edge:#8d9793; --paper:#f3e9d2; --ink:#2b2219; color-scheme:light;
 }
 :root[data-theme="dark"]{
   --bg:#262e32; --panel:#2f383d; --panel2:#374247; --line:#4a565c;
   --text:#ece4d4; --muted:#a9afa9; --brass:#d3a54e; --blood:#c4574a; --moss:#86ac70; --frost:#8fb8c9;
-  --node:#323c41; --nodeText:#ece4d4; --edge:#7d8a8f; color-scheme:dark;
+  --node:#323c41; --nodeText:#ece4d4; --edge:#7d8a8f; --paper:#f3e9d2; --ink:#2b2219; color-scheme:dark;
 }
 *{box-sizing:border-box}
 html,body{height:100%;margin:0}
 body{background:var(--bg);color:var(--text);font:15px/1.6 var(--sans);display:flex;flex-direction:column;overflow:hidden}
 button{font:inherit;color:inherit}
 :focus-visible{outline:2px solid var(--brass);outline-offset:2px}
-header{display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px;padding:12px 18px;border-bottom:1px solid var(--line);background:var(--panel)}
-h1{font:700 21px/1.2 var(--serif);margin:0;letter-spacing:-.01em}
-h1 small{font:400 13px var(--sans);color:var(--muted);margin-left:8px;letter-spacing:0}
-.tabs{display:flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}
-.tabs button{background:none;border:0;padding:6px 14px;cursor:pointer;color:var(--muted)}
+/* 헤더: 제목 | 탭 | 검색 | 진행도 | 아이콘 버튼. 좁은 화면은 3줄 그리드(아래 media) */
+header{display:flex;align-items:center;gap:12px 16px;padding:10px 18px;border-bottom:1px solid var(--line);background:var(--panel)}
+h1{font:700 19px/1.2 var(--serif);margin:0;letter-spacing:-.01em;white-space:nowrap}
+.tabs{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;flex:none}
+.tabs button{background:none;border:0;padding:6px 14px;cursor:pointer;color:var(--muted);white-space:nowrap}
 .tabs button small{font-size:11.5px;opacity:.75;margin-left:2px}
 .tabs button[aria-selected="true"]{background:var(--panel2);color:var(--text);font-weight:600}
-.search{flex:1 1 200px;max-width:320px;position:relative}
-.search input{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:7px 10px;color:var(--text);font:inherit}
-.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);align-items:center}
-.legend i{display:inline-block;width:22px;height:0;border-top:2px solid;vertical-align:middle;margin-right:5px}
-.legend b{display:inline-block;width:11px;height:11px;border-radius:3px;vertical-align:-1px;margin-right:5px}
-.progress{font-size:12.5px;color:var(--muted)}
+.search{flex:1 1 180px;max-width:340px;min-width:0}
+.search input{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:7px 10px;color:var(--text);font:inherit}
+.hstat{display:flex;align-items:center;gap:12px;margin-left:auto;flex:none}
+.progress{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted);white-space:nowrap}
 .progress strong{color:var(--moss);font-weight:600}
-.openbtn{background:none;border:1px solid var(--brass);color:var(--brass);border-radius:999px;padding:3px 11px;font-size:12.5px;cursor:pointer;white-space:nowrap}
+.pbar{width:64px;height:5px;border-radius:3px;background:var(--panel2);overflow:hidden}
+.pbar i{display:block;height:100%;background:var(--moss)}
+@media (max-width:1200px){.pbar{display:none}}
+.openbtn{background:none;border:1px solid var(--brass);color:var(--brass);border-radius:999px;padding:4px 12px;font-size:12.5px;cursor:pointer;white-space:nowrap}
 .openbtn[aria-pressed="true"]{background:var(--brass);color:var(--bg);font-weight:600}
+.hact{display:flex;align-items:center;gap:6px;flex:none}
+.hbtn{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:34px;min-width:34px;padding:0 9px;background:none;border:1px solid var(--line);border-radius:8px;cursor:pointer;font-size:15px;color:var(--text)}
+.hbtn:hover{border-color:var(--brass);color:var(--brass)}
+.hbtn .lbl{font-size:13px}
+/* 소개·정확도 안내: 무대 오른쪽 위 ⓘ */
+.infobtn{position:absolute;top:12px;right:26px;z-index:3;width:36px;height:36px;padding:0;background:var(--panel);border:1px solid var(--line);border-radius:50%;color:var(--muted);font-size:18px;line-height:1;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.18)}
+.infobtn:hover{border-color:var(--brass);color:var(--brass)}
+/* 범례: 무대 왼쪽 아래 접이식 상자 */
+.infoacc summary{cursor:pointer;font:600 12.5px var(--sans);color:var(--muted);margin-bottom:6px}
+.infoacc[open] summary{color:var(--text)}
+.infolist li{padding:4px 0;line-height:1.6;font-size:14px}
+.infolist li::before{content:"· ";color:var(--brass)}
+.legendbox{position:absolute;left:14px;bottom:14px;z-index:3;background:var(--panel);border:1px solid var(--line);border-radius:10px;font-size:12.5px;color:var(--muted);max-width:calc(100% - 90px);box-shadow:0 4px 14px rgba(0,0,0,.18)}
+.legendbox summary{cursor:pointer;padding:6px 12px;font-weight:600;color:var(--text);list-style:none;user-select:none}
+.legendbox summary::-webkit-details-marker{display:none}
+.legendbox summary::before{content:"▸ ";color:var(--muted)}
+.legendbox[open] summary::before{content:"▾ "}
+.lgrow{display:flex;flex-wrap:wrap;gap:4px 14px;padding:0 12px 8px}
+.lgrow[hidden]{display:none}
+.lgrow span{display:inline-flex;align-items:center;white-space:nowrap}
+.legendbox i{display:inline-block;width:22px;height:0;border-top:2px solid;margin-right:5px}
+.legendbox b{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:5px}
 .st{font-size:12px;border-radius:999px;padding:1px 9px;border:1px solid currentColor}
 .st.done{color:var(--moss)} .st.open{color:var(--brass)} .st.blocked{color:var(--blood)}
 .st.locked{color:var(--muted)} .st.req{color:var(--frost)} .st.ext{color:var(--muted)} .st.pick{color:var(--frost)}
@@ -106,8 +129,75 @@ main{flex:1;display:flex;min-height:0}
 .e.next{stroke:var(--brass);stroke-width:2.6;opacity:1}
 /* 시나리오를 선택해도 진행 흐름은 흐리게 남긴다 (관련 없는 선 .15 보다 진하게) */
 .e.fade.next{opacity:.45}
+/* 캠페인 지도 팝업 (js/world.js). 좌표 단위는 지도 그림 px */
+#worldwrap{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;padding:20px}
+#worldwrap.on{display:flex}
+/* 열 때 배경은 서서히, 지도 상자는 살짝 커지며 나타난다(옆 패널이 닫히는 것과 동시에) */
+#worldwrap.on{animation:wfade .22s ease-out}
+#worldwrap.on .mapbox{animation:wpop .26s ease-out}
+@keyframes wfade{from{background:rgba(0,0,0,0)}}
+@keyframes wpop{from{opacity:0;transform:scale(.96)}}
+@media (prefers-reduced-motion:reduce){#worldwrap.on,#worldwrap.on .mapbox{animation:none}}
+#world svg{display:block;margin:0 auto}
+.wsk{display:none;cursor:pointer}
+.wsk.on{display:inline}
+.wsk .c,.wsk.done .u{display:none}
+.wsk.done .c{display:inline}
+.wsk.blocked{opacity:.55}
+.wsk.dim{opacity:.2}
+.wm{cursor:pointer}
+.wm .ha{fill:transparent}
+.wm .ring,.wm .sr{fill:none;stroke:none}
+.wm .wx,.wm .dot,.wm .wn{display:none}
+/* 표식은 지도를 줄여 볼 때도 알아볼 수 있게 --wk 배(applyWZoom 이 정함)로 키운다. SVG 요소의 transform-origin 은 0 0 = 번호 중심 */
+.wmi{transform:scale(var(--wk,1))}
+/* 클리어: 스티커 번호 위에 초록 원 + 번호 */
+.wm.done .dot{display:block;fill:var(--moss);stroke:var(--bg);stroke-width:3}
+.wm .wn{font:700 17px var(--serif);text-anchor:middle;dominant-baseline:central;pointer-events:none}
+.wm.done .wn{display:block;fill:var(--bg)}
+/* 줄여 볼 때(#wsvg.small): 모든 시나리오 번호를 클리어 표시와 같은 크기의 배지로 올린다. 지도 그림 색에 맞춰 종이·먹색 */
+#wsvg.small .wm .dot,#wsvg.small .wm .wn{display:block}
+#wsvg.small .wm:not(.done) .dot{fill:var(--paper);stroke:var(--ink);stroke-width:2.5}
+#wsvg.small .wm:not(.done) .wn{fill:var(--ink)}
+#wsvg.small .wm.locked .dot,#wsvg.small .wm.locked .wn{opacity:.75}
+.wm:hover .ring{stroke:var(--text);stroke-width:4}
+.wm.open .ring{stroke:var(--brass);stroke-width:7;animation:wpulse 1.6s ease-in-out infinite}
+.wm.req .ring{stroke:var(--frost);stroke-width:5;stroke-dasharray:8 5}
+.wm.pick .ring{stroke:var(--frost);stroke-width:8;animation:wpulse 1.4s ease-in-out infinite}
+.wm.blocked .wx{display:block;stroke:var(--blood);stroke-width:5;stroke-linecap:round}
+.wm.sel .sr{stroke:var(--brass);stroke-width:6}
+.wm.hit .ring{stroke:var(--frost);stroke-width:6}
+.wm.dim{opacity:.2}
+@keyframes wpulse{50%{stroke-width:12}}
+@media (prefers-reduced-motion:reduce){.wm .ring{animation:none!important}}
+/* 팝업은 지도 크기에 맞춰 줄어든다(크기는 fitWorld 가 #world 에 준다) */
+#worldwrap .mapbox{width:auto;height:auto;max-width:96vw;max-height:94vh}
+/* 전체화면: 상자가 화면을 꽉 채우고 지도는 가운데 */
+#worldwrap.full{padding:0}
+#worldwrap.full .mapbox{width:100vw;height:100vh;max-width:none;max-height:none;border:0;border-radius:0}
+#worldwrap.full .wstage{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;background:var(--bg)}
+/* 머리줄·범례·출처는 지도 폭을 따라가게(자기 글 길이로 팝업을 넓히지 않게) */
+#worldwrap .maph,#worldwrap .legend2{width:0;min-width:100%;flex-shrink:0}
+.wfoot{gap:4px 14px;padding:8px 14px;font-size:12px;max-height:none}
+.wsrc{margin-left:auto}
+.wsrc summary{cursor:pointer;list-style:none}
+.wsrc summary::-webkit-details-marker{display:none}
+.wsrc[open]{flex-basis:100%;margin-left:0}
+.wsrc p{margin:4px 0 0;line-height:1.5}
+.wsrc a{color:inherit}
+#world{flex:none;padding:0;background:none;overflow:auto}
+#world svg{margin:0}
+.wstage{position:relative;flex:none}
+.wlg{display:inline-block;width:14px;height:14px;border-radius:50%;margin-right:6px;border:3px solid var(--line)}
+.wlg.done{background:var(--moss);border-color:var(--moss)}
+.wlg.open{border-color:var(--brass)}
+.wlg.req{border-color:var(--frost);border-style:dashed}
+.wlg.pick{border-color:var(--frost);border-width:4px}
+.wlg.blocked{border-color:var(--blood)}
+.legend2 b.wlg.flag{width:10px;height:16px;border:0;border-radius:2px;background:var(--brass);clip-path:polygon(0 0,100% 0,100% 100%,50% 78%,0 100%)}
+@media (max-width:560px){#worldwrap{padding:8px}}
 /* side view */
-#side{padding:18px 20px 40px}
+#side{padding:18px 20px 120px}   /* 아래 여백: 왼쪽 아래 범례에 마지막 카드가 가리지 않게 */
 /* 패널이 열려도 카드 배치가 바뀌지 않게 폭을 패널 닫힌 기준(--sidew)으로 고정 — 흐름도처럼 가려지는 부분은 스크롤 */
 @media (min-width:861px){#side>*{width:var(--sidew,auto)}}
 .sgroup{margin-bottom:26px}
@@ -129,8 +219,6 @@ main{flex:1;display:flex;min-height:0}
 .card.locked{opacity:.45}
 /* panel */
 aside{width:410px;flex:none;border-left:1px solid var(--line);background:var(--panel);overflow:auto;padding:0 0 30px}
-.empty{padding:28px 24px;color:var(--muted);position:relative}
-.empty h2{font:700 18px var(--serif);color:var(--text);margin:0 0 8px}
 .ph{padding:20px 22px 14px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--panel);z-index:2}
 .ph .row{display:flex;align-items:flex-start;gap:14px}
 .ph .big{width:52px;height:52px;border-radius:50%;border:2px solid var(--brass);display:grid;place-items:center;font:700 22px var(--serif);color:var(--brass);flex:none;background:var(--panel2)}
@@ -221,7 +309,7 @@ ul.plain li{padding:3px 0}
 .pickopt small{display:block;color:var(--muted);font-size:12px}
 .pickopt .gl{display:block;font-size:12.5px;margin-top:2px}
 .pickfoot{display:flex;justify-content:flex-end;margin-top:14px}
-#mapwrap{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;padding:20px}
+#mapwrap{position:fixed;inset:0;z-index:55;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;padding:20px}
 #mapwrap.on{display:flex}
 .mapbox{display:flex;flex-direction:column;width:min(1180px,96vw);height:min(860px,92vh);background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:0 18px 50px rgba(0,0,0,.5);overflow:hidden}
 .maph{display:flex;align-items:center;gap:10px 16px;flex-wrap:wrap;padding:10px 16px;border-bottom:1px solid var(--line);background:var(--panel)}
@@ -251,6 +339,12 @@ ul.plain li{padding:3px 0}
 .maptip .ti img.ov{transform:rotate(90deg);object-fit:contain}
 .maptip .tn{font-weight:700}
 .maptip .ts{font-size:12px;color:var(--muted)}
+.wtip{z-index:70}
+.wtip .tr{font-size:12.5px;margin-top:6px;line-height:1.5}
+.wtip .tr b{color:var(--brass)}
+.wtip .tr.neg{color:var(--blood)}
+.wtip .tr.neg b{color:var(--blood)}
+#wach image{cursor:pointer}
 .fig{fill:var(--moss);stroke:var(--panel);stroke-width:3}
 .figt{font:700 14px var(--sans);fill:var(--panel);text-anchor:middle;dominant-baseline:central;pointer-events:none}
 .mk{fill:var(--blood);stroke:var(--panel);stroke-width:2}
@@ -268,19 +362,24 @@ ul.plain li{padding:3px 0}
 .mapwarn{margin:0;padding:8px 16px;border-top:1px solid var(--line);background:var(--panel);color:var(--blood);font-size:12.5px}
 .mapnote{padding:0 16px 10px;margin:0;color:var(--muted);font-size:12px;background:var(--panel)}
 .mapnote summary{cursor:pointer;width:max-content;padding:2px 0}
-@media (max-width:1400px){.progress .lbl{display:none}}
-@media (max-width:1100px){header .theme .lbl{display:none}}
 @media (max-width:860px){
-  header{padding:10px 12px}
-  .legend{display:none}
-  h1 small{display:none}
+  /* 좁은 화면: 1줄 제목·아이콘, 2줄 탭·진행도, 3줄 검색 */
+  header{display:grid;grid-template-columns:1fr auto;grid-template-areas:"h1 act" "tabs stat" "search search";gap:8px 10px;padding:10px 12px}
+  h1{grid-area:h1;font-size:17px}
+  .tabs{grid-area:tabs;justify-self:start}
+  .search{grid-area:search;max-width:none}
+  .hstat{grid-area:stat;margin-left:0;gap:8px}
+  .hact{grid-area:act}
+  .pbar{display:none}
   aside{position:fixed;left:0;right:0;bottom:0;width:auto;max-height:78%;border-left:0;border-top:1px solid var(--line);border-radius:14px 14px 0 0;transform:translateY(100%);transition:transform .22s ease;z-index:10;box-shadow:0 -6px 24px rgba(0,0,0,.3);padding-bottom:calc(30px + env(safe-area-inset-bottom,0px))}
   aside.open{transform:none}
   .ph{border-radius:14px 14px 0 0}
 }
 @media (max-width:560px){
   .lbl{display:none}
-  header{gap:8px 10px}
+  .h1s{display:none}
+  .tabs button{padding:6px 10px}
+  .tabs button small{display:none}
   #mapwrap{padding:8px}
   .mapbox{width:100%;height:100%}
   .maph{padding:8px 10px;gap:6px;flex-wrap:nowrap}
@@ -298,8 +397,23 @@ ul.plain li{padding:3px 0}
 }
 @media (prefers-reduced-motion:reduce){aside,aside.off{transition:none}}
 /* 끌어서 옮기는 영역은 글자 선택을 막는다(드래그가 텍스트 전체 선택으로 번지지 않게) */
-.pannable{cursor:grab;-webkit-user-select:none;user-select:none}
-.pannable.dragging{cursor:grabbing}
-.pannable.dragging .n{cursor:grabbing}
+/* grab/grabbing(손바닥) 커서는 윈도우 크롬에서 저해상도 비트맵이라 화면 배율이 높으면 크고 흐리게 깨진다(사용자 지적).
+   OS 기본 커서만 쓴다: 평소 화살표, 끄는 중 이동(move), 누를 수 있는 것은 손가락(pointer) */
+.pannable{cursor:default;-webkit-user-select:none;user-select:none}
+.pannable.dragging:not(#mapbody),.pannable.dragging:not(#mapbody) *{cursor:move!important}
 /* 헥스 배치도는 드래그 중에도 기본 화살표 커서 */
 #mapbody.pannable,#mapbody.pannable.dragging,#mapbody *{cursor:default}
+/* 캠페인 지도 위 바텀 시트: 지도에서 번호를 누르면 상세 패널이 아래에서 올라온다(setPanel 이 .up 토글).
+   넓은 화면의 옆 패널(.off)·좁은 화면의 시트(.open) 규칙을 덮어쓴다 */
+body.worldon aside#panel{position:fixed;left:50%;right:auto;bottom:0;top:auto;width:min(640px,100vw);max-height:64vh;margin:0;z-index:52;visibility:hidden;
+  border:1px solid var(--line);border-bottom:0;border-radius:14px 14px 0 0;box-shadow:0 -10px 40px rgba(0,0,0,.5);
+  transform:translate(-50%,105%);transition:transform .25s ease,visibility 0s linear .25s;padding-bottom:calc(24px + env(safe-area-inset-bottom,0px))}
+body.worldon aside#panel.up{visibility:visible;transform:translate(-50%,0);transition:transform .25s ease,visibility 0s}
+body.worldon aside#panel .ph{border-radius:14px 14px 0 0}
+/* 접힌 시트(.mini): 배치도를 열 때 제목 줄(약 84px)만 남기고 내린다. 누르면 펼친다 */
+body.worldon aside#panel.up.mini{transform:translate(-50%,calc(100% - 84px));overflow:hidden;cursor:pointer}
+body.worldon aside#panel.up.mini .ph{box-shadow:none}
+/* 시트 손잡이: 위로 끌어 올리는 시트임을 알려 준다(접힌 상태에서 누르면 펼침) */
+body.worldon aside#panel .ph::before{content:"";position:absolute;top:7px;left:50%;width:40px;height:4px;border-radius:2px;background:var(--line);transform:translateX(-50%)}
+.notrans,.notrans *{transition:none!important}
+@media (prefers-reduced-motion:reduce){body.worldon aside#panel{transition:none}}

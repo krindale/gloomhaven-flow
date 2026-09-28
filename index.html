@@ -15,32 +15,42 @@ try{document.documentElement.dataset.theme=localStorage.getItem('gh-theme')||'da
 </head>
 <body>
 <header>
-  <h1>글룸헤이븐 시나리오 흐름도<small>1판 · 95개 시나리오 · 스포일러 전체 공개</small></h1>
+  <h1>글룸헤이븐 <span class="h1s">시나리오 </span>흐름도</h1>
   <div class="tabs" role="tablist">
     <button role="tab" aria-selected="true" data-v="graph">메인 캠페인 <small>1~51</small></button>
     <button role="tab" aria-selected="false" data-v="side">사이드 <small>52~95</small></button>
   </div>
   <div class="search"><input id="q" type="search" placeholder="번호, 이름, 지역, 몬스터, 업적으로 찾기" aria-label="시나리오 검색"></div>
-  <div class="legend">
-    <span><i style="border-color:var(--edge)"></i>해금</span>
-    <span><i style="border-color:var(--frost);border-top-style:dashed"></i>하나만 선택</span>
-    <span><i style="border-color:var(--muted);border-top-style:dotted"></i>보물로 해금</span>
-    <span><b style="background:var(--moss)"></b>클리어</span>
-    <span><b style="border:1.5px solid var(--brass)"></b>진행 가능</span>
-    <span><b style="border:1.5px dashed var(--blood)"></b>막힘</span>
-    <span><b style="background:var(--muted);opacity:.45"></b>잠김</span>
-    <span style="color:var(--blood)">☠ 보스</span>
+  <div class="hstat">
+    <span class="progress" id="prog"></span>
+    <button class="openbtn" id="openonly" aria-pressed="false" title="지금 진행할 수 있는 시나리오만 보기"></button>
   </div>
-  <span class="progress" id="prog"></span>
-  <button class="openbtn" id="openonly" aria-pressed="false" title="지금 진행할 수 있는 시나리오만 보기"></button>
-  <button class="theme" id="ptog" aria-pressed="false" title="상세 패널 켜기/끄기" aria-label="상세 패널">▤<span class="lbl"> 패널</span></button>
-  <button class="theme" id="info" aria-label="정확도 안내">ⓘ<span class="lbl"> 정확도</span></button>
-  <button class="theme" id="theme" aria-label="밝기 전환">◐</button>
+  <div class="hact">
+    <button class="hbtn" id="worldbtn" title="캠페인 지도에서 진행 상황 보기" aria-label="캠페인 지도"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z"/><path d="M9 4v14M15 6v14"/></svg><span class="lbl">지도</span></button>
+    <button class="hbtn" id="theme" title="밝게/어둡게" aria-label="밝기 전환">◐</button>
+  </div>
 </header>
 <main>
   <div id="stage">
     <div class="view on" id="graph"></div>
     <div class="view" id="side"></div>
+    <button class="infobtn" id="info" title="이 페이지 소개와 정확도" aria-label="이 페이지 소개와 정확도">ⓘ</button>
+    <details class="legendbox" id="legend">
+      <summary>범례</summary>
+      <div class="lgrow edges">
+        <span><i style="border-color:var(--edge)"></i>해금</span>
+        <span><i style="border-color:var(--frost);border-top-style:dashed"></i>하나만 선택</span>
+        <span><i style="border-color:var(--muted);border-top-style:dotted"></i>보물로 해금</span>
+      </div>
+      <div class="lgrow">
+        <span><b style="background:var(--moss)"></b>클리어</span>
+        <span><b style="border:1.5px solid var(--brass)"></b>진행 가능</span>
+        <span><b style="border:1.5px dashed var(--frost)"></b>업적 조건 미충족</span>
+        <span><b style="border:1.5px dashed var(--blood)"></b>막힘</span>
+        <span><b style="background:var(--muted);opacity:.45"></b>잠김</span>
+        <span style="color:var(--blood)">☠ 보스</span>
+      </div>
+    </details>
     <div class="zoom" id="zoomctl">
       <button id="zin" class="zb" aria-label="확대">+</button>
       <button id="zout" class="zb" aria-label="축소">−</button>
@@ -48,15 +58,7 @@ try{document.documentElement.dataset.theme=localStorage.getItem('gh-theme')||'da
       <button id="reset" title="클리어 기록과 '하나만 해금' 선택을 모두 지웁니다" aria-label="진행 초기화">초기화</button>
     </div>
   </div>
-  <aside id="panel" class="off" aria-live="polite">
-    <div class="empty"><button class="close" aria-label="닫기">×</button>
-      <h2>시나리오를 눌러 보세요</h2>
-      <p>목표, 요구 조건, 등장 몬스터, 보상, 해금·차단 관계, 줄거리를 한 번에 보여줍니다.</p>
-      <p><b>메인 캠페인</b> 탭에 1~51번, <b>사이드</b> 탭에 52~95번이 있습니다. 합쳐서 95개 전부 들어 있습니다.</p>
-      <p>클리어한 시나리오를 체크하면 이 브라우저에 저장되고, 그 선택으로 막힌 시나리오는 흐리게 표시됩니다.</p>
-      <p>목표와 특수 규칙은 시나리오북 원문과 대조했습니다. 자세한 내용은 헤더의 <b>ⓘ 정확도</b>를 눌러 보세요.</p>
-    </div>
-  </aside>
+  <aside id="panel" class="off" aria-live="polite"></aside>
 </main>
 <div id="pickwrap" role="dialog" aria-modal="true" aria-labelledby="pickttl">
  <div class="pickdlg" tabindex="-1">
@@ -91,10 +93,31 @@ try{document.documentElement.dataset.theme=localStorage.getItem('gh-theme')||'da
   <details class="mapnote"><summary>출처·라이선스</summary>지도는 Gloomhaven Line of Sight Tool의 공식 시나리오 배치와 Cephalofair Creator Pack 타일 이미지(CC BY-NC-SA 4.0)를 그대로 사용했고, 몬스터·장애물·보물 위치는 Tabletop Simulator 배치 데이터(datahaven)에서 가져왔습니다. 몬스터 초상과 장애물·함정 그림도 Creator Pack 자산(CC BY-NC-SA 4.0)으로, Gloomhaven Secretariat와 Virtual Gloomhaven Board를 거쳐 가져왔습니다.</details>
  </div>
 </div>
+<div id="worldwrap" role="dialog" aria-modal="true" aria-labelledby="worldttl">
+ <div class="mapbox">
+  <div class="maph">
+    <h2 id="worldttl">캠페인 지도</h2><span class="sub" id="worldsub"></span>
+    <span class="sp"></span>
+    <button class="theme" id="wzin" aria-label="확대">+</button>
+    <button class="theme" id="wzout" aria-label="축소">−</button>
+    <button class="theme" id="wzfit" title="지도 전체 보기" aria-label="전체 보기">맞춤</button>
+    <button class="theme" id="wfull" aria-pressed="false" title="전체화면" aria-label="전체화면"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+    <button class="theme" id="worldclose" aria-label="닫기"><span class="lbl">닫기 </span>✕</button>
+  </div>
+  <div class="maptip wtip" id="wtip" role="tooltip"></div>
+  <div class="wstage"><div class="mapbody" id="world"></div></div>
+  <div class="legend2 wfoot">
+    <span><i class="wlg done"></i>클리어</span><span><i class="wlg open"></i>진행 가능</span><span><i class="wlg req"></i>조건 미충족</span>
+    <span><i class="wlg pick"></i>고르는 중</span><span><i class="wlg blocked"></i>막힘</span><span><b class="wlg flag"></b>전역 업적</span>
+    <details class="wsrc"><summary>출처</summary><p>지도 그림과 시나리오·전역 업적 스티커는 Cephalofair Games 의 것(CC BY-NC-SA 4.0)으로, <a href="https://github.com/teamducro/gloomhaven-storyline" target="_blank" rel="noopener">gloomhaven-storyline</a> 저장소를 거쳐 가져왔습니다. 시나리오 위치는 지도에 인쇄된 번호 자리를 직접 찾아 맞췄습니다.</p></details>
+  </div>
+ </div>
+</div>
 <!-- 일반 스크립트(모듈 아님): file:// 로 열어도 동작해야 한다. 순서 = 데이터 → 공용 → 화면 → app(초기화) -->
 <script src="data/scenarios.js"></script>
 <script src="data/battle.js"></script>
 <script src="data/layout.js"></script>
+<script src="data/world.js"></script>
 <script src="js/util.js"></script>
 <script src="js/state.js"></script>
 <script src="js/graph.js"></script>
@@ -105,6 +128,7 @@ try{document.documentElement.dataset.theme=localStorage.getItem('gh-theme')||'da
 <script src="js/map.js"></script>
 <script src="js/maptip.js"></script>
 <script src="js/panzoom.js"></script>
+<script src="js/world.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>
