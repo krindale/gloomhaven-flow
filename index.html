@@ -6,6 +6,8 @@
 <title>글룸헤이븐 1판 시나리오 흐름도</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<script>/* 테마: 저장된 선택이 없으면 다크가 기본. 첫 화면 깜빡임을 막으려고 head 에서 바로 적용 */
+try{document.documentElement.dataset.theme=localStorage.getItem('gh-theme')||'dark'}catch(e){document.documentElement.dataset.theme='dark'}</script>
 <link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=IBM+Plex+Sans+KR:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -261,8 +263,9 @@ ul.plain li{padding:3px 0}
   aside.off{margin-right:-411px;visibility:hidden;transition:margin-right .28s ease,visibility 0s linear .28s}
 }
 @media (prefers-reduced-motion:reduce){aside,aside.off{transition:none}}
-.pannable{cursor:grab}
-.pannable.dragging{cursor:grabbing;user-select:none}
+/* 끌어서 옮기는 영역은 글자 선택을 막는다(드래그가 텍스트 전체 선택으로 번지지 않게) */
+.pannable{cursor:grab;-webkit-user-select:none;user-select:none}
+.pannable.dragging{cursor:grabbing}
 .pannable.dragging .n{cursor:grabbing}
 /* 헥스 배치도는 드래그 중에도 기본 화살표 커서 */
 #mapbody.pannable,#mapbody.pannable.dragging,#mapbody *{cursor:default}
@@ -943,6 +946,8 @@ function panZoom(el,getZ,setZ,min,max){
   let d=null, moved=false;
   el.addEventListener('pointerdown',ev=>{
     if(ev.pointerType!=='mouse'||ev.button!==0) return;
+    ev.preventDefault();                                  // 기본 동작(텍스트 선택 시작)을 막는다. 클릭은 그대로 발생한다
+    try{getSelection().removeAllRanges()}catch(e){}
     d={x:ev.clientX,y:ev.clientY,l:el.scrollLeft,t:el.scrollTop,id:ev.pointerId}; moved=false;
   });
   el.addEventListener('pointermove',ev=>{
@@ -974,7 +979,6 @@ panZoom($('#mapbody'),()=>mapZoom,z=>{mapZoom=z;const s=$('#mapbody svg');if(s){
 $('#openonly').onclick=()=>{onlyOpen=!onlyOpen;refresh()};
 $('#info').onclick=showInfo;
 $('#theme').onclick=()=>{const r=document.documentElement;const cur=r.dataset.theme||(matchMedia('(prefers-color-scheme: light)').matches?'light':'dark');r.dataset.theme=cur==='light'?'dark':'light';try{localStorage.setItem('gh-theme',r.dataset.theme)}catch(e){}};
-try{const t=localStorage.getItem('gh-theme');if(t)document.documentElement.dataset.theme=t}catch(e){}
 buildGraph();buildSide();refresh();requestAnimationFrame(()=>{zoom=$('#graph').clientWidth<700?.6:.72;applyZoom()});
 </script>
 </body>

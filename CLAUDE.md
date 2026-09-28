@@ -208,7 +208,7 @@ const OIMG=["trap-spike", ...]         // OVN 과 같은 순서. assets/overlays
 | 키 | 값 | 비고 |
 |---|---|---|
 | `localStorage['gh-done']` | 클리어한 시나리오 id 배열(JSON) | `done` Set으로 로드. try/catch로 감싸 실패해도 동작 |
-| `localStorage['gh-theme']` | `"light"` \| `"dark"` | `documentElement.dataset.theme`에 반영 |
+| `localStorage['gh-theme']` | `"light"` \| `"dark"` | `documentElement.dataset.theme`에 반영. **저장값이 없으면 시스템 설정과 무관하게 다크**(head 의 인라인 스크립트가 첫 페인트 전에 적용) |
 
 - 서버 저장·계정·동기화 없음. 사파리 프라이빗 모드 등에서 읽기/쓰기가 던질 수 있으므로 **모든 접근은 try/catch를 유지한다.**
 - **상세 패널은 저장하지 않는다.** 닫힌 채 시작 → 노드/카드를 누르면 열림 → 빈 곳 클릭(`deselect()`)·× 버튼·다른 탭으로 전환하면 닫힘. 헤더 ▤ 버튼으로 수동 토글. 넓은 화면은 `.off`(슬라이드), 좁은 화면은 바텀시트 `.open`.
