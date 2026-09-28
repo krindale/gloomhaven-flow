@@ -1,9 +1,10 @@
 // 진행 상태: 저장값(클리어·하나만 해금 선택·인원수)과 시나리오 상태 계산
 
-let done=new Set(store.get('gh-done',[]));
+// 저장값이 깨져 있어도(배열·객체가 아님) 페이지가 멈추지 않게 모양을 확인한다
+let done=new Set((v=>Array.isArray(v)?v:[])(store.get('gh-done',[])));
 const save=()=>store.set('gh-done',[...done]);
 // '셋 중 하나만 해금'(S[id].choose, 1판은 #13 → 15·17·20)에서 고른 시나리오. {출처 id: 고른 id}
-let choice=store.get('gh-choice',{})||{};
+let choice=(v=>v&&typeof v==='object'&&!Array.isArray(v)?v:{})(store.get('gh-choice',{}));
 const saveChoice=()=>store.set('gh-choice',choice);
 // 배치도 인원수(2~4)
 let pc=4; {const v=+store.get('gh-pc',4); if(v>=2&&v<=4) pc=v;}
