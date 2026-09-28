@@ -16,22 +16,45 @@ function foot(s){
   return t;
 }
 
-// 헤더 ⓘ: 정확도 안내. 확인 필요(gv:0) 목록은 실시간으로 센다
+// 화면 오른쪽 위 ⓘ: 이 페이지(프로젝트) 소개. 정확도는 맨 아래 접이식 한 칸(§9 기준표와 같은 내용).
+// 확인 필요(gv:0) 목록은 실시간으로 센다
 function showInfo(){
   const unv=Object.keys(S).map(Number).filter(i=>!S[i].gv).sort((a,b)=>a-b);
   sel=null; panelId=null; refresh();
   $('#panel').innerHTML=`
   <div class="ph"><button class="close" aria-label="닫기">×</button>
-    <div class="row"><div class="big">ⓘ</div><div><h2>정확도 안내</h2>
-      <div class="sub">어디까지 믿어도 되는지</div></div></div>
-    <div class="meta"><span class="tag">전체 95개</span><span class="tag">메인 51</span><span class="tag">사이드 44</span></div>
+    <div class="row"><div class="big">ⓘ</div><div><h2>글룸헤이븐 시나리오 흐름도</h2>
+      <div class="sub">글룸헤이븐 1판 캠페인 도우미 · 비공식 팬 페이지</div></div></div>
+    <div class="meta"><span class="tag">시나리오 95개</span><span class="tag">메인 51 · 사이드 44</span><span class="tag">스포일러 전체 공개</span></div>
   </div>
-  <div class="sec"><h3>신뢰도 높음</h3><p class="story">요구 조건, 몬스터, 보상, 해금·차단 관계는 <b>Gloomhaven Secretariat</b>의 오픈소스 데이터를 그대로 가져왔습니다.</p></div>
-  <div class="sec"><h3>목표·특수 규칙</h3><p class="story">95개 전부 시나리오북 원문과 대조했습니다. 42번 이후 47개는 공개된 시나리오북 페이지 스캔(Tabletop Simulator 데이터 datahaven 에 연결된 이미지)을 읽어 목표·특수 규칙을 원문대로 고쳤습니다. 번역은 이 페이지에서 옮긴 것이라 공식 한글판 문구와 다를 수 있습니다.</p></div>
-  <div class="sec"><h3>줄거리</h3><p class="story">메인 스토리는 원문을 기반으로 충실히 썼습니다. 사이드 시나리오는 스토리를 지어내지 않으려고 해금 경로와 규칙 위주로만 짧게 적었습니다.</p></div>
-  <div class="sec"><h3>한국어 시나리오명</h3><p class="story">공식 한글판 명칭이 아니라 이 페이지에서 옮긴 이름입니다. 실물 책과 다를 수 있으니 영문명을 함께 확인하세요.</p></div>
-  ${unv.length?`<div class="sec"><h3>확인 필요 ${unv.length}개</h3>${links(unv)}</div>`:''}
-  <p class="foot">잘못된 곳을 발견하면 시나리오 번호와 함께 알려 주세요.</p>`;
+  <div class="sec"><h3>어떤 프로젝트인가요</h3><p class="story">글룸헤이븐 1판 캠페인을 하면서 늘 생기는 질문 — <b>"다음에 무엇을 할 수 있지?"</b>, <b>"이걸 깨면 무엇이 열리고 무엇이 막히지?"</b> — 에 한눈에 답하려고 만든 한국어 캠페인 도우미입니다. 시나리오 95개의 해금 관계를 흐름도로 그리고, 목표·특수 규칙·요구 조건·몬스터·보상·줄거리와 맵 배치까지 한 페이지에 모았습니다.</p>
+    <p class="story" style="margin-top:8px">스포일러가 전부 들어 있습니다. 보물 상자 내용만 버튼을 눌러야 보이게 가려 두었습니다.</p></div>
+  <div class="sec"><h3>할 수 있는 것</h3><ul class="plain infolist">
+    <li><b>흐름도</b> — 메인 1~51번은 해금 관계를 선으로 이은 흐름도, 사이드 52~95번은 해금 방식별 목록으로 봅니다.</li>
+    <li><b>진행 추적</b> — 클리어를 체크하면 지금 할 수 있는 시나리오(▶ 진행 가능), 업적 조건이 모자란 것, 선택 때문에 막힌 것을 자동으로 계산합니다. #13 처럼 셋 중 하나만 여는 갈림길도 고를 수 있습니다.</li>
+    <li><b>시나리오 상세</b> — 목표, 특수 규칙, 요구 조건, 등장 몬스터·보스, 보상, 해금 경로, 줄거리.</li>
+    <li><b>헥스 배치도</b> — 실제 맵 타일 위에 몬스터(2/3/4인별 일반·정예), 장애물·함정·보물·문·시작 위치를 헥스 단위로 그렸습니다.</li>
+    <li><b>캠페인 지도</b> — 헤더의 지도 버튼. 실물 지도에 스티커를 붙이듯 해금·클리어한 시나리오와 얻은 전역 업적을 보여 줍니다.</li>
+    <li><b>검색</b> — 번호, 이름, 지역, 몬스터, 업적, 맵 타일로 찾습니다.</li>
+  </ul></div>
+  <div class="sec"><h3>알아 두면 좋은 것</h3><ul class="plain infolist">
+    <li>드래그로 화면을 옮기고, Shift+휠로 확대·축소합니다.</li>
+    <li>클리어 기록은 이 브라우저에만 저장됩니다. 계정·서버가 없어 다른 기기와 공유되지 않고, 오른쪽 아래 <b>초기화</b>로 지울 수 있습니다.</li>
+    <li>한국어 시나리오 이름과 줄거리는 이 페이지에서 옮긴 것이라 공식 한글판과 다를 수 있습니다. 영문 이름을 함께 적어 두었습니다.</li>
+  </ul></div>
+  <div class="sec"><h3>데이터와 그림 출처</h3><ul class="plain infolist">
+    <li>해금·요구 조건·몬스터·보상·보물: <b>Gloomhaven Secretariat</b> 오픈소스 데이터</li>
+    <li>사이드 해금 경로·지역: <b>gloomhaven-storyline</b></li>
+    <li>헥스 배치: <b>Gloomhaven Line of Sight Tool</b>의 공식 배치 + <b>datahaven</b>(Tabletop Simulator) 좌표</li>
+    <li>맵 타일·몬스터·장애물 그림, 캠페인 지도와 스티커: Cephalofair Games <b>Creator Pack</b> 등(CC BY-NC-SA 4.0)</li>
+  </ul></div>
+  <details class="sec infoacc"><summary>정확도 — 어디까지 믿어도 되나요</summary><ul class="plain infolist">
+    <li><b>요구 조건·몬스터·보상·해금·차단</b>: Gloomhaven Secretariat 데이터를 그대로 써서 신뢰도가 높습니다.</li>
+    <li><b>목표·특수 규칙</b>: 95개 전부 시나리오북 원문과 대조했습니다(42번 이후 47개는 공개된 시나리오북 페이지 스캔으로 대조). 번역이라 공식 한글판 문구와는 다를 수 있습니다.</li>
+    <li><b>줄거리</b>: 메인은 원문 기반. 사이드는 스토리를 지어내지 않으려고 해금 경로·규칙 위주로만 짧게 적었습니다.</li>
+    <li><b>한국어 시나리오명</b>: 공식 명칭이 아닙니다. 영문명을 함께 확인하세요.</li>
+  </ul>${unv.length?`<h3 style="margin-top:10px">확인 필요 ${unv.length}개</h3>${links(unv)}`:''}</details>
+  <p class="foot">Gloomhaven 은 Cephalofair Games 의 상표입니다. 이 페이지는 비영리 팬 페이지이며 공식 제품과 관계가 없습니다. 잘못된 곳을 발견하면 시나리오 번호와 함께 알려 주세요.</p>`;
   $('#panel').scrollTop=0; setPanel(true);
 }
 
@@ -136,24 +159,26 @@ function toggleChoice(id,b){
 $('#panel').addEventListener('click',ev=>{
   const at=q=>ev.target.closest(q);
   let b;
+  // 지도 위에서 접힌 시트(.mini)는 어디를 눌러도 먼저 펼친다(× 는 바로 닫기, 배치도는 바로 열기)
+  if($('#panel').classList.contains('mini')&&!at('.close')&&!at('#openmap')){$('#panel').classList.remove('mini');return}
   if((b=at('[data-tr]'))) return openTreasure(b);
   if((b=at('[data-trall]'))){$('#panel').querySelectorAll('[data-tr]').forEach(openTreasure); b.remove(); return;}
   if((b=at('[data-go]'))) return goScenario(+b.dataset.go);
   if(at('.close')) return setPanel(false);
   if(panelId==null) return;
-  if(at('#openmap')) return openMap(panelId);
+  if(at('#openmap')){   // 지도 위 시트에서 배치도를 열면 시트를 접어 제목 줄만 남긴다
+    if(document.body.classList.contains('worldon')) $('#panel').classList.add('mini');
+    return openMap(panelId);
+  }
   if(at('.done-btn')) return toggleDone(panelId);
   if((b=at('[data-choose]'))) return toggleChoice(panelId,b);
 });
 
 // 패널 켜기/끄기. 닫힌 채로 시작하고, 시나리오를 고르면 열리고 빈 곳을 누르면 닫힌다.
 // 좁은 화면은 바텀시트(.open), 넓은 화면은 .off 로 옆으로 밀어낸다
-let panelOn=false;
 function setPanel(on){
   const p=$('#panel');
-  panelOn=on;
+  if(document.body.classList.contains('worldon')){p.classList.toggle('up',on);p.classList.remove('mini');return}   // 캠페인 지도 위 바텀 시트
   if(narrow()){p.classList.toggle('open',on);p.classList.remove('off')}
   else p.classList.toggle('off',!on);
-  $('#ptog').setAttribute('aria-pressed',on);
 }
-$('#ptog').onclick=()=>setPanel(!panelOn);

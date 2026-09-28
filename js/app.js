@@ -26,12 +26,13 @@ function revealSel(){
 // 선택 해제 + 패널 닫기
 function deselect(){sel=null;refresh();setPanel(false)}
 // 다른 시나리오로 이동 (필요하면 탭을 바꾸고 보이는 곳으로 스크롤)
-function goScenario(id){showView(S[id].side?'side':'graph');select(id,true)}
+function goScenario(id){if(worldOpen())return worldPick(id);showView(S[id].side?'side':'graph');select(id,true)}   // 지도를 보는 중이면 지도에서 옮겨 간다
 
 function showView(v){
   document.querySelectorAll('.tabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.v===v));
   document.querySelectorAll('.view').forEach(x=>x.classList.toggle('on',x.id===v));
   document.querySelectorAll('#zoomctl .zb').forEach(b=>b.style.display=v==='graph'?'':'none');
+  $('#legend .edges').hidden=v!=='graph';   // 선 종류는 흐름도에만 있다
   if(sel!=null&&(v==='side')!==!!S[sel].side) deselect();
   if(v==='side') sizeSide();
 }
@@ -58,12 +59,19 @@ function refresh(){
     g.classList.toggle('sel',id===sel);
     g.classList.toggle('dim',hidden(id));
     g.classList.toggle('hit',!!q&&match(id));});
+  document.querySelectorAll('.wm').forEach(g=>{const id=+g.dataset.id;
+    for(const c of NODE_ST) g.classList.toggle(c,st[id]===c);
+    g.classList.toggle('sel',id===sel);
+    g.classList.toggle('dim',hidden(id));
+    g.classList.toggle('hit',!!q&&match(id));});
+  refreshWorld(st);
   document.querySelectorAll('.card').forEach(c=>{const id=+c.dataset.id;
     for(const cl of CARD_ST) c.classList.toggle(cl,st[id]===cl);
     c.classList.toggle('sel',id===sel);
     c.classList.toggle('dim',hidden(id)||st[id]==='blocked')});
   refreshEdges(openIds);
-  $('#prog').innerHTML=`클리어 <strong>${done.size}</strong> / ${Object.keys(S).length} <span class="lbl" style="opacity:.7">(메인 51 + 사이드 44)</span>`;
+  const total=Object.keys(S).length;
+  $('#prog').innerHTML=`<span>클리어 <strong>${done.size}</strong> / ${total}</span><span class="pbar"><i style="width:${(done.size/total*100).toFixed(1)}%"></i></span>`;
   const ob=$('#openonly');
   ob.textContent=`▶ 진행 가능 ${openIds.size}`;
   ob.setAttribute('aria-pressed',onlyOpen);
@@ -103,9 +111,16 @@ document.addEventListener('keydown',ev=>{
   if($('#resetwrap').classList.contains('on')) closeReset();
   else if($('#pickwrap').classList.contains('on')) closePick();
   else if(mapId!=null) closeMap();
+  else if(worldOpen()&&$('#panel').classList.contains('up')) deselect();   // 지도 위 시트부터 내린다
+  else if(worldOpen()) closeWorld();
 });
+// 범례: 넓은 화면은 펼친 채, 좁은 화면은 접은 채 시작. 펼침 여부는 이 브라우저에 기억한다
+$('#legend').open=store.get('gh-legend',!narrow());
+// toggle 은 비동기로 오므로, 위에서 코드로 연 것까지 저장되지 않게 사용자가 누른 뒤에만 저장한다
+$('#legend summary').addEventListener('click',()=>setTimeout(()=>store.set('gh-legend',$('#legend').open)));
 panZoom($('#graph'),()=>zoom,z=>{zoom=z;applyZoom()},.25,2);
 panZoom($('#side'));   // 사이드 목록은 확대 없이 드래그 이동만
+panZoom($('#world'),()=>wz,setWZoom,.1,1.5);
 panZoom($('#mapbody'),()=>mapZoom,setMapZoom,.35,3);
 
 // ---------- 시작 ----------
