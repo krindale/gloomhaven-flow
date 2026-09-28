@@ -234,13 +234,23 @@ const OIMG=["trap-spike", ...]         // OVN 과 같은 순서. assets/overlays
   ```
 - 커밋 전 확인: 브라우저로 `index.html`을 열어 ① 메인 탭 그래프가 어긋남 없이 그려지는지 ② 사이드 탭 ③ 노드 클릭 시 패널 ④ 검색(번호/이름/몬스터) ⑤ 클리어 체크 후 새로고침 유지 ⑥ 테마 전환 ⑦ 좁은 폭(모바일) 레이아웃.
 
-## 8. 배포 (GitHub Pages)
+## 8. 배포 (GitHub Pages + Cloudflare Workers)
 
+`main`에 push하면 두 곳에 동시에 배포된다. **push 는 사용자가 지시할 때만 한다.**
+
+**GitHub Pages**
 - 저장소: `krindale/gloomhaven-flow`, 공개. `main` 브랜치 루트를 그대로 서빙한다.
 - 공개 URL: https://krindale.github.io/gloomhaven-flow/
-- 빌드 단계가 없으므로 `main`에 push하면 몇 분 안에 반영된다. Actions 워크플로를 추가할 필요가 없다.
 - `.nojekyll`이 없으면 Jekyll이 개입한다. 지우지 않는다.
-- 상태 확인: `gh api repos/krindale/gloomhaven-flow/pages`
+- 상태 확인: `gh api repos/krindale/gloomhaven-flow/pages/builds/latest`
+
+**Cloudflare Workers (정적 에셋)** — carnegie-setup-helper 와 같은 구성
+- URL: https://gloomhaven-flow.krindale.workers.dev
+- `.github/workflows/deploy-cloudflare.yml`: `index.html` + `assets/` 만 `dist/` 로 복사 → `wrangler deploy`(4.135.0 고정). 페이지 빌드가 아니라 복사일 뿐이다. `dist/`·`.wrangler/` 는 gitignore.
+- `wrangler.jsonc`: `assets.directory = ./dist`. 저장소 루트를 올리면 `tools/`·`.git` 까지 올라가므로 바꾸지 않는다.
+- 저장소 시크릿 `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID` 필요(`gh secret list -R krindale/gloomhaven-flow`).
+- 로컬 점검: `mkdir dist && cp index.html dist/ && cp -r assets dist/ && npx -y wrangler@4.135.0 deploy --dry-run` (파일 약 160개가 정상).
+- 상태 확인: `gh run list -R krindale/gloomhaven-flow --workflow deploy-cloudflare.yml`
 
 ## 9. 정확도 정책 (사용자 확정 사항)
 

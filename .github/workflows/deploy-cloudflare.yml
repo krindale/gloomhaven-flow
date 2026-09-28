@@ -1,0 +1,28 @@
+name: Deploy to Cloudflare
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cloudflare-web
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # 빌드 단계 없음. 페이지에 필요한 index.html + assets/ 만 dist/ 로 복사해 Workers 정적 에셋으로 올린다.
+      - run: mkdir dist && cp index.html dist/ && cp -r assets dist/
+      # 액션 기본 wrangler(3.x)는 main 없는 assets 전용 설정을 못 읽으므로 4.x 고정 (carnegie-setup-helper 와 동일).
+      - uses: cloudflare/wrangler-action@v3
+        with:
+          wranglerVersion: "4.135.0"
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy
