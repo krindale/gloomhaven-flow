@@ -56,7 +56,7 @@ h1 small{font:400 13px var(--sans);color:var(--muted);margin-left:8px;letter-spa
 .openbtn[aria-pressed="true"]{background:var(--brass);color:var(--bg);font-weight:600}
 .st{font-size:12px;border-radius:999px;padding:1px 9px;border:1px solid currentColor}
 .st.done{color:var(--moss)} .st.open{color:var(--brass)} .st.blocked{color:var(--blood)}
-.st.locked{color:var(--muted)} .st.req{color:var(--frost)} .st.ext{color:var(--muted)}
+.st.locked{color:var(--muted)} .st.req{color:var(--frost)} .st.ext{color:var(--muted)} .st.pick{color:var(--frost)}
 .theme{background:none;border:1px solid var(--line);border-radius:6px;padding:5px 9px;cursor:pointer}
 main{flex:1;display:flex;min-height:0}
 #stage{flex:1;position:relative;min-width:0}
@@ -85,6 +85,24 @@ main{flex:1;display:flex;min-height:0}
 .n.open .go{display:block}
 .n .go{display:none}
 .n.req rect.body{stroke:var(--frost);stroke-width:1.8;stroke-dasharray:5 3}
+/* #13 클리어 후 셋 중 하나를 고를 수 있는 시나리오: 눈에 띄게 */
+.n.pick rect.body{stroke:var(--frost);stroke-width:3.2;fill:color-mix(in srgb,var(--frost) 22%,var(--node));animation:pickpulse 1.4s ease-in-out infinite}
+.n .pk{display:none;font:700 13px var(--sans);fill:var(--frost)}
+.n.pick .pk{display:block}
+.n.pick .go{display:none}
+.e.pickable{stroke:var(--frost);stroke-width:2.8;opacity:1}
+@keyframes pickpulse{50%{stroke-width:5}}
+@media (prefers-reduced-motion:reduce){.n.pick rect.body{animation:none}}
+.cascade{margin-top:8px;font-size:12.5px;color:var(--blood);line-height:1.5}
+.pickbox{margin:12px 16px 0;padding:10px 12px 12px;border:1px dashed var(--frost);border-radius:8px}
+.pickbox h3{color:var(--frost)}
+.pickmsg{margin:0 0 8px;font-size:12.5px;color:var(--muted);line-height:1.5}
+.chooser{display:flex;flex-wrap:wrap;gap:6px}
+.chooser button{border:1px solid var(--line);background:var(--bg);border-radius:6px;padding:4px 10px;cursor:pointer;font-size:13px;color:var(--text)}
+.chooser button b{color:var(--frost);margin-right:4px}
+.chooser button[aria-pressed="true"]{border-color:var(--moss);background:var(--moss);color:var(--bg)}
+.chooser button[aria-pressed="true"] b{color:var(--bg)}
+.chooser button:disabled{opacity:.45;cursor:default}
 .n.locked{opacity:.42}
 .n .boss{font:700 12px var(--sans);fill:var(--blood)}
 .card .bossmark{color:var(--blood);font-size:12px;margin-left:4px}
@@ -95,6 +113,7 @@ main{flex:1;display:flex;min-height:0}
 .e.in{stroke:var(--brass);stroke-width:2.6}
 .e.out{stroke:var(--moss);stroke-width:2.6}
 .e.fade{opacity:.15}
+.e.nopick{opacity:.2}
 .e.next{stroke:var(--brass);stroke-width:2.6;opacity:1}
 /* 시나리오를 선택해도 진행 흐름은 흐리게 남긴다 (관련 없는 선 .15 보다 진하게) */
 .e.fade.next{opacity:.45}
@@ -187,6 +206,22 @@ ul.plain li{padding:3px 0}
 .mapbtn:hover{border-color:var(--brass);color:var(--brass)}
 .theme[aria-pressed="true"]{border-color:var(--brass);color:var(--brass)}
 /* 헥스 배치도 */
+/* 하나만 해금 선택 팝업 */
+#pickwrap{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;padding:16px}
+#pickwrap.on{display:flex}
+.pickdlg{width:min(560px,100%);max-height:92vh;overflow:auto;background:var(--panel);border:1px solid var(--frost);border-radius:14px;padding:20px 20px 16px;box-shadow:0 18px 50px rgba(0,0,0,.5)}
+.pickdlg:focus{outline:none}
+.pickdlg h2{font:700 19px/1.3 var(--serif);margin:0 0 6px}
+#pickmsg{margin:0 0 14px;color:var(--muted);font-size:13.5px;line-height:1.55}
+#pickopts{display:flex;flex-direction:column;gap:8px}
+.pickopt{-webkit-user-select:none;user-select:none;display:flex;align-items:center;gap:12px;text-align:left;width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--node);cursor:pointer;color:var(--text)}
+.pickopt:hover,.pickopt:focus-visible{border-color:var(--frost);background:color-mix(in srgb,var(--frost) 14%,var(--node))}
+.pickopt[aria-pressed="true"]{border-color:var(--moss);background:color-mix(in srgb,var(--moss) 22%,var(--node))}
+.pickopt .big{width:40px;height:40px;border-radius:50%;border:2px solid var(--frost);display:grid;place-items:center;font:700 16px var(--serif);color:var(--frost);flex:none}
+.pickopt b{display:block;font:700 15px var(--serif)}
+.pickopt small{display:block;color:var(--muted);font-size:12px}
+.pickopt .gl{display:block;font-size:12.5px;margin-top:2px}
+.pickfoot{display:flex;justify-content:flex-end;margin-top:14px}
 #mapwrap{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;padding:20px}
 #mapwrap.on{display:flex}
 .mapbox{display:flex;flex-direction:column;width:min(1180px,96vw);height:min(860px,92vh);background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:0 18px 50px rgba(0,0,0,.5);overflow:hidden}
@@ -315,6 +350,14 @@ ul.plain li{padding:3px 0}
     </div>
   </aside>
 </main>
+<div id="pickwrap" role="dialog" aria-modal="true" aria-labelledby="pickttl">
+ <div class="pickdlg" tabindex="-1">
+  <h2 id="pickttl"></h2>
+  <p id="pickmsg"></p>
+  <div id="pickopts"></div>
+  <div class="pickfoot"><button class="theme" id="pickclose">나중에 고르기</button></div>
+ </div>
+</div>
 <div id="mapwrap" role="dialog" aria-modal="true" aria-label="헥스 배치도">
  <div class="mapbox">
   <div class="maph">
@@ -355,6 +398,49 @@ const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',
 let done=new Set();
 try{done=new Set(JSON.parse(localStorage.getItem('gh-done')||'[]'))}catch(e){}
 const save=()=>{try{localStorage.setItem('gh-done',JSON.stringify([...done]))}catch(e){}};
+// '셋 중 하나만 해금'(S[id].choose, 현재 #13 → 15·17·20)에서 고른 시나리오. {출처 id: 고른 id}
+let choice={};
+try{choice=JSON.parse(localStorage.getItem('gh-choice')||'{}')||{}}catch(e){}
+const saveChoice=()=>{try{localStorage.setItem('gh-choice',JSON.stringify(choice))}catch(e){}};
+// 고른 것. 따로 고르지 않았어도 후보 중 하나를 클리어했으면 그것을 고른 것으로 본다
+// 클리어를 해제했을 때 더 이상 열릴 수 없게 된 뒤쪽 시나리오의 클리어도 함께 해제한다(연쇄).
+// 해금 출처(하나만 해금은 고른 것만)·#37 보물 경로가 모두 사라진 경우만 해제하고,
+// 이벤트·개인 퀘스트 등 글로 적힌 다른 경로(src)가 있거나 출처가 없는 시나리오(#1 등)는 건드리지 않는다.
+let lastCascade=null;
+function cascadeUndo(){
+  const removed=[];
+  for(let again=true;again;){
+    again=false;
+    for(const d of [...done]){
+      const s=S[d];
+      if(d===1||s.src.length||(!s.from.length&&!s.tfrom)) continue;
+      const ok=s.from.some(x=>done.has(x)&&(!S[x].choose.includes(d)||chosen(x)===d))||(s.tfrom&&done.has(37));
+      if(!ok){done.delete(d);removed.push(d);again=true;}
+    }
+  }
+  return removed.sort((a,b)=>a-b);
+}
+// 하나만 해금 선택 팝업
+let pickSrc=null, pickAt=0;
+// clearing=true: #13 을 클리어 체크하는 중. 하나를 골라야 클리어가 확정되고, 취소하면 클리어되지 않는다
+let pickClearing=false;
+function openPick(src,clearing){
+  pickSrc=src; pickAt=Date.now(); pickClearing=!!clearing; const s=S[src], ch=chosen(src);
+  $('#pickttl').textContent=`#${src} ${s.ko} — 해금할 시나리오를 하나 고르세요`;
+  $('#pickclose').textContent=clearing?'취소 (클리어하지 않음)':'나중에 고르기';
+  $('#pickmsg').textContent=`${s.choose.map(x=>'#'+x).join('·')} 중 하나만 열 수 있습니다. 고른 것만 진행 가능이 되고 나머지는 잠깁니다(다른 해금 경로가 있으면 그쪽으로는 열릴 수 있음).`;
+  $('#pickopts').innerHTML=s.choose.map(x=>`<button class="pickopt" data-opt="${x}" aria-pressed="${ch===x}"><span class="big">${x}</span><span><b>${esc(S[x].ko)}</b><small>${esc(S[x].en)}</small><span class="gl">목표: ${esc(S[x].goal)}</span></span></button>`).join('');
+  $('#pickopts').querySelectorAll('[data-opt]').forEach(b=>b.onclick=()=>{
+    if(Date.now()-pickAt<400) return;   // 연달아 누른 클릭이 뜨자마자 항목을 고르지 않게
+    if(pickClearing){done.add(src); lastCascade=null;}
+    choice[src]=+b.dataset.opt; cascadeUndo(); saveChoice(); save(); closePick(); refresh();
+    if(sel!=null) renderPanel(sel);
+  });
+  $('#pickwrap').classList.add('on');
+  $('.pickdlg').focus();   // 첫 항목에 포커스를 주면 Enter/Space 가 그대로 선택으로 이어진다
+}
+function closePick(){$('#pickwrap').classList.remove('on'); pickSrc=null; pickClearing=false;}
+function chosen(src){const c=S[src].choose; if(choice[src]&&c.includes(+choice[src])) return +choice[src]; return c.find(x=>done.has(x))||null;}
 let sel=null, zoom=1;
 const NW=190,NH=62;
 
@@ -398,13 +484,17 @@ function statuses(){
     const id=+k, s=S[k];
     if(done.has(id)){st[id]='done'; continue}
     if(blk.has(id)){st[id]='blocked'; continue}
-    const opened = id===1 || s.from.some(x=>done.has(x)) || (s.tfrom&&done.has(37));
-    if(!opened){ st[id] = (!s.from.length&&s.src.length)?'ext':'locked'; continue }
+    // 출처가 '하나만 선택'이면 고른 것만 열린다
+    const via=x=>done.has(x)&&(!S[x].choose.includes(id)||chosen(x)===id);
+    const opened = id===1 || s.from.some(via) || (s.tfrom&&done.has(37));
+    if(!opened){
+      const pick=s.from.some(x=>done.has(x)&&S[x].choose.includes(id)&&chosen(x)===null);
+      st[id] = pick?'pick':(!s.from.length&&s.src.length)?'ext':'locked'; continue }
     st[id] = reqState(id,ach)==='fail'?'req':'open';
   }
   return st;
 }
-const STL={done:'클리어함',open:'지금 진행 가능',req:'업적 조건 미충족',blocked:'현재 선택으로 막힘',ext:'이벤트·보물로 해금',locked:'아직 잠김'};
+const STL={done:'클리어함',open:'지금 진행 가능',req:'업적 조건 미충족',blocked:'현재 선택으로 막힘',ext:'이벤트·보물로 해금',locked:'아직 잠김',pick:'해금할 하나를 고르는 중'};
 
 const bossNames=id=>S[id].mons.filter(m=>m.b).map(m=>m.n);
 const hasBoss=id=>S[id].mons.some(m=>m.b);
@@ -431,14 +521,16 @@ function buildGraph(){
       <circle cx="27" cy="${NH/2}" r="18"/><text class="num" x="27" y="${NH/2}">${id}</text>
       <text class="nm" x="52" y="27">${esc(s.ko)}</text>
       <text class="en" x="52" y="44">${esc(s.en)}</text>
-      <text class="go" x="${NW-12}" y="${NH/2+5}" text-anchor="end" style="fill:var(--brass);font:700 13px var(--sans)">▶</text>`+
+      <text class="go" x="${NW-12}" y="${NH/2+5}" text-anchor="end" style="fill:var(--brass);font:700 13px var(--sans)">▶</text>
+      <text class="pk" x="${NW-10}" y="${NH/2+5}" text-anchor="end">고르기</text>`+
       (hasBoss(id)?`<text class="boss" x="${NW-11}" y="17" text-anchor="end">☠</text><title>보스: ${esc(bossNames(id).join(', '))}</title>`:'')+
       `</g>`;
   }
   h+=`</g></svg>`;
   $('#graph').innerHTML=h;
   $('#graph').querySelectorAll('.n').forEach(g=>{
-    g.addEventListener('click',()=>select(+g.dataset.id));
+    g.addEventListener('click',()=>{const id=+g.dataset.id; select(id);
+      if(g.classList.contains('pick')){const src=S[id].from.find(x=>done.has(x)&&S[x].choose.includes(id)&&chosen(x)===null); if(src) openPick(src);}});
     g.addEventListener('keydown',ev=>{if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();select(+g.dataset.id)}});
   });
 }
@@ -833,7 +925,21 @@ function renderPanel(id){
   if(s.src.length) src+=`<ul class="plain" style="margin-top:${from.length?6:0}px">${s.src.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`;
   if(!src) src='<span style="color:var(--muted)">시작 시나리오</span>';
   const opens=s.unlocks.length?`<div class="links">${s.unlocks.map(x=>lk(x)).join('')}</div>`:'';
+  // 하나만 해금: 아래 '열리는 시나리오' 칸은 링크만, 고르는 칸(pickBox)은 클리어 버튼 바로 아래에 둔다
   const choose=s.choose.length?`<div style="font-size:12.5px;color:var(--frost);margin-bottom:6px">셋 중 하나만 해금</div><div class="links">${s.choose.map(x=>lk(x)).join('')}</div>`:'';
+  let pickBox='';
+  // 고를 수 있는 후보 쪽 패널: 바로 이 시나리오로 고르기
+  const pickSrc=s.from.find(x=>done.has(x)&&S[x].choose.includes(id)&&chosen(x)===null);
+  if(pickSrc) pickBox=`<div class="sec pickbox"><h3>해금 선택</h3><p class="pickmsg">#${pickSrc} ${esc(S[pickSrc].ko)} 클리어 보상으로 ${S[pickSrc].choose.map(x=>'#'+x).join('·')} 중 하나만 열 수 있습니다.</p><div class="chooser"><button data-pickfor="${pickSrc}" data-choose="${id}" aria-pressed="false"><b>${id}</b>이 시나리오로 고르기</button></div></div>`;
+  if(s.choose.length){
+    const ch=chosen(id), explicit=!!choice[id];
+    const msg=!done.has(id)?`클리어하면 여기서 ${s.choose.join('·')} 중 하나를 골라 해금합니다.`
+      :!ch?'클리어했습니다. 해금할 시나리오를 하나 고르세요. 고른 것만 열리고 나머지는 잠깁니다.'
+      :explicit?'고른 시나리오만 열립니다. 다시 누르면 선택이 취소됩니다.'
+      :'클리어 기록으로 자동 선택됐습니다. 실제로 고른 것이 다르면 바꾸세요.';
+    pickBox=`<div class="sec pickbox"><h3>해금할 시나리오 고르기</h3><p class="pickmsg">${msg}</p>`+
+      (done.has(id)?`<div class="chooser">${s.choose.map(x=>`<button data-choose="${x}" aria-pressed="${ch===x}"><b>${x}</b>${esc(S[x].ko)}</button>`).join('')}</div>`:'')+`</div>`;
+  }
   const blocks=s.blocks.length?`<div class="sec"><h3>클리어하면 막히는 시나리오</h3><div class="links">${s.blocks.map(x=>lk(x,'block')).join('')}</div></div>`:'';
   const links=s.links.length?` <span class="tag">링크: ${s.links.map(x=>'#'+x).join(', ')} 바로 진행 가능</span>`:'';
   const isDone=done.has(id);
@@ -843,7 +949,9 @@ function renderPanel(id){
       <h2>${esc(s.ko)}</h2><div class="sub">${esc(s.en)}</div></div></div>
     <div class="meta"><span class="tag">지도 ${esc(s.grid)}</span>${s.grp?`<span class="tag">${esc(s.grp)}</span>`:''}${links}<span class="st ${statuses()[id]}">${STL[statuses()[id]]}</span>${hasBoss(id)?`<span class="tag" style="color:var(--blood);border-color:var(--blood)">☠ 보스 ${esc(bossNames(id).join(', '))}</span>`:''}</div>
     <button class="done-btn" aria-pressed="${isDone}">${isDone?'클리어함 ✓':'클리어 체크'}</button>
+    ${lastCascade&&lastCascade.id===id&&lastCascade.list.length?`<div class="cascade">함께 클리어 해제됨(이 시나리오를 거쳐야 열리는 시나리오): ${lastCascade.list.map(x=>'#'+x).join(', ')}</div>`:''}
   </div>
+  ${pickBox}
   <div class="sec"><h3>목표</h3><div class="goal">${esc(s.goal)}${s.gv?'':'<span class="unv" title="원문과 대조하지 못한 항목">확인 필요</span>'}</div></div>
   <div class="sec"><h3>줄거리</h3><p class="story">${esc(s.sum)}</p></div>
   ${s.note?`<div class="sec"><h3>특수 규칙·메모</h3><p class="note">${esc(s.note)}</p></div>`:''}
@@ -857,12 +965,30 @@ function renderPanel(id){
   <p class="foot">${foot(s)}</p>`;
   $('#panel').scrollTop=0;
   const mb=$('#openmap'); if(mb) mb.onclick=()=>openMap(id);
-  $('#panel .done-btn').onclick=()=>{done.has(id)?done.delete(id):done.add(id);save();refresh();renderPanel(id)};
+  $('#panel .done-btn').onclick=()=>{
+    // #13 처럼 '하나만 해금'이 있으면 팝업에서 골라야 클리어가 확정된다(취소하면 클리어되지 않음)
+    if(!done.has(id)&&S[id].choose.length){openPick(id,true); return;}
+    if(done.has(id)){
+      done.delete(id);
+      if(S[id].choose.length){delete choice[id]; saveChoice();}   // 클리어를 해제하면 선택도 지워서 다시 클리어할 때 새로 고르게
+      lastCascade={id,list:cascadeUndo()};
+    } else {done.add(id); lastCascade=null;}
+    save();refresh();renderPanel(id);
+  };
+  // 하나만 해금: 같은 버튼을 다시 누르면 선택 취소. 선택을 바꿔 열 수 없게 된 시나리오의 클리어도 연쇄 해제
+  $('#panel').querySelectorAll('[data-choose]').forEach(b=>b.onclick=()=>{
+    const src=b.dataset.pickfor?+b.dataset.pickfor:id;   // 후보 쪽 패널에서 누르면 출처(#13)의 선택으로 저장
+    const x=+b.dataset.choose; if(choice[src]===x) delete choice[src]; else choice[src]=x;
+    const list=cascadeUndo(); lastCascade=list.length?{id,list}:null;
+    if(src!==id) lastCascade=null;
+    saveChoice(); save(); refresh(); renderPanel(id);
+  });
   $('#panel .close').onclick=()=>setPanel(false);
   $('#panel').querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>{const t=+b.dataset.go;const v=S[t].side?'side':'graph';showView(v);select(t,true)});
 }
 const smooth=()=>matchMedia('(prefers-reduced-motion:reduce)').matches?'auto':'smooth';
 function select(id,scroll){
+  lastCascade=null;
   sel=id; renderPanel(id); refresh(); setPanel(true);
   if(scroll){
     const g=document.querySelector(`.view.on [data-id="${id}"]`);
@@ -886,18 +1012,21 @@ function refresh(){
   const openIds=new Set(Object.keys(st).filter(k=>st[k]==='open').map(Number));
   const match=id=>{if(!q)return true;const s=S[id];return (String(id)===q)||[s.ko,s.en,s.goal,s.sum,s.note,...s.mons.map(m=>m.n),...s.rw,...s.reqs.flat().map(r=>r.t),(hasBoss(id)?'보스 boss':''),...(((MAP[id]||{}).r)||[]).map(r=>r.t||'')].join(' ').toLowerCase().includes(q)};
   document.querySelectorAll('.n').forEach(g=>{const id=+g.dataset.id;
-    for(const c of ['done','open','req','blocked','locked']) g.classList.toggle(c,st[id]===c);
+    for(const c of ['done','open','req','blocked','locked','pick']) g.classList.toggle(c,st[id]===c);
     g.classList.toggle('sel',id===sel);
     g.classList.toggle('dim',(!!q&&!match(id))||(onlyOpen&&!openIds.has(id)));
     g.classList.toggle('hit',!!q&&match(id));});
   document.querySelectorAll('.card').forEach(c=>{const id=+c.dataset.id;
-    for(const cl of ['done','open','req','locked']) c.classList.toggle(cl,st[id]===cl);
+    for(const cl of ['done','open','req','locked','pick']) c.classList.toggle(cl,st[id]===cl);
     c.classList.toggle('sel',id===sel);
     c.classList.toggle('dim',(!!q&&!match(id))||st[id]==='blocked'||(onlyOpen&&!openIds.has(id)))});
   document.querySelectorAll('#graph .e').forEach(e=>{const a=+e.dataset.a,b=+e.dataset.b;
     const kind=e.classList.contains('c')?'c':e.classList.contains('t')?'t':'u';
     e.classList.remove('in','out','fade');
     e.classList.remove('next');
+    // '하나만 해금'에서 고르지 않은 쪽 선은 흐리게
+    e.classList.toggle('nopick',kind==='c'&&done.has(a)&&chosen(a)!==null&&chosen(a)!==b);
+    e.classList.toggle('pickable',kind==='c'&&done.has(a)&&chosen(a)===null&&!sel);
     if(done.has(a)&&openIds.has(b)&&a!==sel&&b!==sel) e.classList.add('next');
     if(sel){ if(b===sel){e.classList.add('in');e.setAttribute('marker-end','url(#ar-in)')}
       else if(a===sel){e.classList.add('out');e.setAttribute('marker-end','url(#ar-out)')}
@@ -925,6 +1054,9 @@ $('#mapwrap').onclick=ev=>{if(ev.target===$('#mapwrap')){$('#mapwrap').classList
 $('#mapgrid').onclick=()=>{mapGrid=!mapGrid;$('#mapgrid').setAttribute('aria-pressed',mapGrid);drawMap()};
 $('#mapzin').onclick=()=>{mapZoom=Math.min(3,mapZoom*1.25); drawMap()};
 $('#mapzout').onclick=()=>{mapZoom=Math.max(.35,mapZoom/1.25); drawMap()};
+$('#pickclose').onclick=closePick;
+// 배경 클릭으로는 닫지 않는다(연달아 누른 클릭에 팝업이 바로 사라졌다). '나중에 고르기'·Esc 로만 닫는다
+document.addEventListener('keydown',ev=>{if(ev.key==='Escape'&&$('#pickwrap').classList.contains('on')){closePick();return}});
 document.addEventListener('keydown',ev=>{if(ev.key==='Escape'&&mapId!=null){$('#mapwrap').classList.remove('on');mapId=null}});
 // 패널 켜기/끄기. 닫힌 채로 시작하고, 시나리오를 고르면 열리고 빈 곳을 누르면 닫힌다.
 // 좁은 화면은 바텀시트(.open), 넓은 화면은 .off 로 옆으로 밀어낸다

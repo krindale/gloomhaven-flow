@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-글룸헤이븐 1판 시나리오 흐름도 — 정적 단일 페이지 웹앱. GitHub Pages로 배포한다.
+글룸헤이븐 1판 시나리오 흐름도 — 정적 단일 페이지 웹앱. Cloudflare Workers(정적 에셋)로 배포한다.
 
 ## 1. 프로젝트 개요
 
@@ -14,7 +14,6 @@
 ```
 index.html              앱 전체 (CSS + 데이터 + 로직 인라인)
 README.md               공개용 설명과 데이터 출처 표기
-.nojekyll               GitHub Pages의 Jekyll 처리 비활성화 (삭제 금지)
 CLAUDE.md               이 문서
 tools/fetch_ghs.py      GHS 시나리오 JSON 1~95를 tools/ghs_cache/ 로 내려받음
 tools/build_battle_data.py  index.html 의 const MON/MAP 블록을 다시 생성
@@ -60,7 +59,7 @@ assets/overlays/start.webp    시작 위치 토큰의 가운데 그림만 잘라
 | 사이드 렌더 | `function buildSide()` | `SIDE`로 카드 목록 생성 |
 | 상세 패널 | `function renderPanel(id)` | `S[id]`의 모든 필드를 섹션별로 출력 |
 | 상태 갱신 | `function refresh()` | 클리어/막힘/선택/검색 상태를 클래스 토글로 반영 |
-| 진행 상태 계산 | `function statuses()` | done/open/req/blocked/ext/locked 6상태 |
+| 진행 상태 계산 | `function statuses()` | done/open/req/blocked/ext/pick/locked 7상태. `choose` 출처는 `chosen(src)` 로 고른 것만 연다 |
 | 업적 집계 | `function achievements()` | 클리어한 시나리오 보상에서 업적 수를 센다 |
 | 정확도 안내 | `function showInfo()` | 헤더 ⓘ 버튼. `gv:0` 목록을 실시간 집계(0개면 숨김) |
 | 패널 하단 고지 | `function foot(s)` | `side`/`gv`에 따라 문구 분기 |
@@ -196,6 +195,7 @@ const OIMG=["trap-spike", ...]         // OVN 과 같은 순서. assets/overlays
 | `req` | 업적 조건 미충족 | 해금은 됐지만 `reqs` 판정이 `fail` |
 | `blocked` | 선택으로 막힘 | `blockedSet()` |
 | `ext` | 이벤트·보물로 해금 | `from`이 없고 `src` 설명만 있는 경우(주로 사이드) |
+| `pick` | 하나만 해금 선택 대기 | 출처가 `choose`(#13 → 15·17·20)이고 출처는 클리어했지만 아직 고르지 않음 |
 | `locked` | 아직 잠김 | 나머지 |
 
 - 업적은 클리어한 시나리오의 `rw`에서 `파티 업적: X` / `전역 업적: X`를 세고, `잃는 업적: X`로 뺀다.
@@ -208,12 +208,15 @@ const OIMG=["trap-spike", ...]         // OVN 과 같은 순서. assets/overlays
 | 키 | 값 | 비고 |
 |---|---|---|
 | `localStorage['gh-done']` | 클리어한 시나리오 id 배열(JSON) | `done` Set으로 로드. try/catch로 감싸 실패해도 동작 |
+| `localStorage['gh-choice']` | `{"13": 17}` | '하나만 해금'에서 고른 시나리오. try/catch |
 | `localStorage['gh-theme']` | `"light"` \| `"dark"` | `documentElement.dataset.theme`에 반영. **저장값이 없으면 시스템 설정과 무관하게 다크**(head 의 인라인 스크립트가 첫 페인트 전에 적용) |
 
 - 서버 저장·계정·동기화 없음. 사파리 프라이빗 모드 등에서 읽기/쓰기가 던질 수 있으므로 **모든 접근은 try/catch를 유지한다.**
 - **상세 패널은 저장하지 않는다.** 닫힌 채 시작 → 노드/카드를 누르면 열림 → 빈 곳 클릭(`deselect()`)·× 버튼·다른 탭으로 전환하면 닫힘. 헤더 ▤ 버튼으로 수동 토글. 넓은 화면은 `.off`(슬라이드), 좁은 화면은 바텀시트 `.open`.
 - 사이드 탭은 넓은 화면에서 `#side>*` 폭을 `--sidew`(패널 닫힌 기준, `sizeSide()`)로 고정해 패널이 열려도 카드 배치가 바뀌지 않는다. 가려진 부분은 가로 스크롤.
 - 선택 중에도 진행 흐름 엣지(`.e.next`)는 `.e.fade.next`(opacity .45)로 흐리게 남긴다.
+- **하나만 해금**(`S[id].choose`, GHS `chooseLocation` — 1판에서는 #13 뿐): #13 패널에서 고른 값을 `localStorage['gh-choice']` = `{"13":17}` 로 저장. 고를 수 있는 후보는 흐름도에서 `.n.pick`(청록 채움·두꺼운 테두리·깜빡임·'고르기' 표시)과 `.e.pickable` 선으로 강조하고, 후보 패널에서도 '이 시나리오로 고르기'로 바로 고른다. #13 을 클리어 체크하면 선택 팝업(`openPick(src,true)`)이 뜨고 **하나를 골라야 클리어가 확정**된다(취소·Esc 는 클리어하지 않음). #13 클리어를 해제하면 `choice[13]` 도 지워 다시 클리어할 때 새로 고른다. #13 패널의 고르는 칸(`pickBox`)은 클리어 버튼 바로 아래. 클리어 해제 시 `cascadeUndo()`가 더 이상 열릴 수 없는 뒤쪽 시나리오의 클리어도 연쇄 해제한다(글로 적힌 다른 해금 경로가 있는 시나리오는 제외). 고르지 않았어도 후보 중 하나를 클리어했으면 그것을 고른 것으로 보되, 다른 경로로 열렸을 수 있어 언제든 바꿀 수 있다. 고르지 않은 후보는 다른 경로(#39→15, #37 보물→17, #7→20)가 없으면 잠김. 고르지 않은 쪽 점선 엣지는 `.e.nopick`.
+- 다른 갈림길(서로 막힘 11곳, '미달성이어야 함' 조건 13곳)은 `blocks`·`reqs` 로 처리된다.
 - "막힘"은 저장하지 않는다. `blockedSet()`이 `done`에서 매번 계산한다.
 
 ## 7. 작업 규칙
@@ -234,21 +237,15 @@ const OIMG=["trap-spike", ...]         // OVN 과 같은 순서. assets/overlays
   ```
 - 커밋 전 확인: 브라우저로 `index.html`을 열어 ① 메인 탭 그래프가 어긋남 없이 그려지는지 ② 사이드 탭 ③ 노드 클릭 시 패널 ④ 검색(번호/이름/몬스터) ⑤ 클리어 체크 후 새로고침 유지 ⑥ 테마 전환 ⑦ 좁은 폭(모바일) 레이아웃.
 
-## 8. 배포 (GitHub Pages + Cloudflare Workers)
+## 8. 배포 (Cloudflare Workers)
 
-`main`에 push하면 두 곳에 동시에 배포된다. **push 는 사용자가 지시할 때만 한다.**
+`main`에 push하면 Cloudflare 에 자동 배포된다. **push 는 사용자가 지시할 때만 한다.**
+GitHub Pages 는 2026-09-28 사용자 요청으로 껐다(`.nojekyll` 도 삭제). 다시 켜지 않는다.
 
-**GitHub Pages**
-- 저장소: `krindale/gloomhaven-flow`, 공개. `main` 브랜치 루트를 그대로 서빙한다.
-- 공개 URL: https://krindale.github.io/gloomhaven-flow/
-- `.nojekyll`이 없으면 Jekyll이 개입한다. 지우지 않는다.
-- 상태 확인: `gh api repos/krindale/gloomhaven-flow/pages/builds/latest`
-
-**Cloudflare Workers (정적 에셋)** — carnegie-setup-helper 와 같은 구성
-- URL: https://gloomhaven-flow.krindale.workers.dev
+- URL: https://gloomhaven-flow.krindale.workers.dev — carnegie-setup-helper 와 같은 구성
 - `.github/workflows/deploy-cloudflare.yml`: `index.html` + `assets/` 만 `dist/` 로 복사 → `wrangler deploy`(4.135.0 고정). 페이지 빌드가 아니라 복사일 뿐이다. `dist/`·`.wrangler/` 는 gitignore.
 - `wrangler.jsonc`: `assets.directory = ./dist`. 저장소 루트를 올리면 `tools/`·`.git` 까지 올라가므로 바꾸지 않는다.
-- 저장소 시크릿 `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID` 필요(`gh secret list -R krindale/gloomhaven-flow`).
+- 저장소 시크릿 `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`(`gh secret list -R krindale/gloomhaven-flow`). 토큰은 사용자가 직접 등록한다. `!` 로 `gh secret set` 을 실행하면 입력 창이 없어 빈 값이 들어가니 별도 터미널에서 넣게 한다.
 - 로컬 점검: `mkdir dist && cp index.html dist/ && cp -r assets dist/ && npx -y wrangler@4.135.0 deploy --dry-run` (파일 약 160개가 정상).
 - 상태 확인: `gh run list -R krindale/gloomhaven-flow --workflow deploy-cloudflare.yml`
 
