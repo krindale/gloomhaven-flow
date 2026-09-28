@@ -36,7 +36,7 @@ assets/overlays/start.webp    시작 위치 토큰의 가운데 그림만 잘라
 `tools/`는 **페이지 빌드 단계가 아니다.** 전투 준비 데이터를 다시 만들 때만 수동으로 돌린다. 배포는 여전히 `index.html`을 그대로 서빙한다.
 
 빌드 산출물·`package.json`·번들러·프레임워크가 **없다**. 추가하지 않는다.
-외부 리소스는 Google Fonts(Gowun Batang, IBM Plex Sans KR) 뿐이다. 오프라인에서도 폰트만 대체되고 정상 동작해야 한다.
+외부 리소스는 Google Fonts(Gowun Batang, IBM Plex Sans KR)와 Cloudflare Web Analytics 비콘(`static.cloudflareinsights.com`, 공개 주소에서만 로드, 토큰은 공개용) 뿐이다. 오프라인에서도 폰트만 대체되고 정상 동작해야 한다.
 
 ## 3. index.html 내부 지도
 

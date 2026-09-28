@@ -8,6 +8,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <script>/* 테마: 저장된 선택이 없으면 다크가 기본. 첫 화면 깜빡임을 막으려고 head 에서 바로 적용 */
 try{document.documentElement.dataset.theme=localStorage.getItem('gh-theme')||'dark'}catch(e){document.documentElement.dataset.theme='dark'}</script>
+<!-- Cloudflare Web Analytics (방문자 통계, 쿠키 없음, 토큰은 공개용). 공개 주소에서만 불러와 로컬 확인이 통계에 섞이지 않게 한다 -->
+<script>if(location.hostname==='gloomhaven-flow.krindale.workers.dev'){const s=document.createElement('script');s.type='module';s.src='https://static.cloudflareinsights.com/beacon.min.js';s.dataset.cfBeacon='{"token": "593a4c59e1384547a6e6ce5daf9cc354"}';document.head.appendChild(s)}</script>
 <link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=IBM+Plex+Sans+KR:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{
