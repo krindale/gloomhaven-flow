@@ -29,7 +29,8 @@ js/map.js               헥스 배치도(헥스 기하 → 층별 SVG 함수 →
 js/maptip.js            배치도 마우스 오버 툴팁(mapHover)
 js/panzoom.js           드래그 이동·Shift+휠 확대(panZoom)
 js/world.js             캠페인 지도 팝업(openWorld/closeWorld, buildWorld·refreshWorld, 스티커·전역 업적 스티커, 요약 카드). 처음 열 때 만든다
-js/app.js               sel·onlyOpen, select/deselect/goScenario/showView, 검색(HAY·matcher), refresh, 헤더·Esc 이벤트, 시작 호출 — 반드시 마지막
+js/search.js            검색 색인(SIDX)·점수(searchScenarios)·matcher, 입력창 아래 결과 목록(#sugg, renderSugg/closeSugg)
+js/app.js               sel·onlyOpen, select/deselect/goScenario/showView, refresh, 헤더·Esc 이벤트, 시작 호출 — 반드시 마지막
 README.md               공개용 설명과 데이터 출처 표기
 CLAUDE.md               이 문서
 tools/fetch_ghs.py      GHS 시나리오 JSON 1~95를 tools/ghs_cache/ 로 내려받음
@@ -61,20 +62,20 @@ assets/overlays/start.webp    시작 위치 토큰의 가운데 그림만 잘라
 
 ## 3. 코드 구조 규칙
 
-**불러오는 순서** (`index.html` 맨 아래): `data/scenarios.js` → `data/battle.js` → `data/layout.js` → `data/world.js` → `util` → `state` → `graph` → `side` → `treasure` → `panel` → `dialogs` → `map` → `maptip` → `panzoom` → `world` → `app`.
+**불러오는 순서** (`index.html` 맨 아래): `data/scenarios.js` → `data/battle.js` → `data/layout.js` → `data/world.js` → `util` → `state` → `graph` → `side` → `treasure` → `panel` → `dialogs` → `map` → `maptip` → `panzoom` → `world` → `search` → `app`.
 
 - 모든 파일은 일반 스크립트라 최상위 `const`/`let`/`function` 이 **전역 공유**된다. 이름이 겹치면 SyntaxError 로 페이지 전체가 멈추므로 새 전역 이름은 `grep` 으로 먼저 확인한다.
 - 파일을 불러오는 **그 순간 실행되는** 최상위 코드는 앞 파일의 것만 쓸 수 있다(데이터·`$`·`store` 등). 다른 파일의 함수는 이벤트 핸들러·함수 안에서만 부른다. 시작 호출(`buildGraph();buildSide();refresh();`)은 `app.js` 맨 끝에만 둔다.
 - 새 파일을 만들면 `index.html` 의 태그 순서와 위 목록, §2 를 함께 고친다. 배포 워크플로는 `css js data assets` 폴더째 복사하므로 폴더 안 파일은 따로 등록할 필요 없다.
 - 패널 안 버튼은 그릴 때마다 핸들러를 붙이지 않는다. `panel.js` 의 `#panel` 클릭 위임 하나가 `[data-go]`(시나리오 이동)·`.close`·`[data-tr]`/`[data-trall]`(보물)·`#openmap`·`.done-btn`·`[data-choose]` 를 처리한다. 새 버튼도 여기에 추가한다.
-- Esc 는 `app.js` 의 핸들러 하나가 맨 위 팝업부터 닫는다(초기화 → 하나만 해금 → 배치도 → 지도 위 시트 → 캠페인 지도).
+- Esc 는 `app.js` 의 핸들러 하나가 맨 위 팝업부터 닫는다(검색 결과 목록 → 초기화 → 하나만 해금 → 배치도 → 지도 위 시트 → 캠페인 지도).
 - localStorage 는 `store.get/set`(JSON)으로만 접근한다. 예외: `gh-theme` 은 head 인라인 스크립트가 JSON 이 아닌 문자열로 읽으므로 그대로 둔다.
 - 헥스 좌표 계산은 `map.js` 의 `HEX_R`·`COLW`·`ROWH`·`hexPx`·`hexCenter`·`hexPoly` 만 쓴다(툴팁도 같은 함수).
 
 | 찾을 것 | 파일 · 앵커 | 내용 |
 |---|---|---|
 | 테마 토큰 | `css/app.css` `:root{` | CSS 변수. 다크가 기본, `prefers-color-scheme` + `data-theme` 오버라이드 3중 정의 |
-| 마크업 | `index.html` `<header>` ~ 팝업 4개 | 헤더 한 줄: 제목 · 탭 · 검색 · `.hstat`(진행도 막대·▶ 진행 가능) · `.hact`(지도·◐ 아이콘 `.hbtn`). 좁은 화면(≤860px)은 3줄 그리드. 소개·정확도 안내 `#info`(`.infobtn`, ⓘ 아이콘만)는 `#stage` 오른쪽 위, 범례는 `#stage` 왼쪽 아래 접이식 `#legend`(선 종류 줄 `.edges` 는 흐름도 탭에서만). `#graph`/`#side` 뷰, `#zoomctl`, `#panel`, `#pickwrap`·`#resetwrap`·`#mapwrap`·`#worldwrap` |
+| 마크업 | `index.html` `<header>` ~ 팝업 4개 | 헤더 한 줄: 제목 · 탭 · 검색 · `.hstat`(진행도 막대·▶ 진행 가능) · `.hact`(지도·◐ 아이콘 `.hbtn`). 좁은 화면(≤860px)은 3줄 그리드. 소개·정확도 안내 `#info`(`.infobtn`, ⓘ 아이콘만)는 `#stage` 오른쪽 위, 범례는 `#stage` 왼쪽 아래 항상 펼친 `#legend`(사용자 요청으로 접기·'범례' 제목 없음. 선 종류 줄 `.edges` 는 흐름도 탭에서만). `#graph`/`#side` 뷰, `#zoomctl`, `#panel`, `#pickwrap`·`#resetwrap`·`#mapwrap`·`#worldwrap` |
 | 보물 상자 | `js/treasure.js` | `MAP[id].r[].tr` 번호별로 잠긴 줄을 그리고, 버튼을 누르면 `TRS`에서 내용을 꺼내 보여준다. 열림 상태는 저장하지 않는다. `G`는 시나리오 전용 보물(내용 없음) |
 | 배치도 버튼 | `js/panel.js` `id="openmap"` (`.mapbtn`, `HEXICON`) | 패널 오른쪽 위 × 옆 `.ph-act` 안의 헥스 아이콘 버튼. 제목에는 붙이지 않는다. 방별 구성 카드는 사용자 요청으로 제거했다 — **패널에 방 정보를 다시 넣지 않는다** |
 | 배치도 렌더 | `js/map.js` `mapSvg(id)` | 층 순서: 타일 → 격자 → 문 → 오버레이 → 시작 헥스 → 몬스터 → 호위 대상 → 표식 → 방 라벨 → `#hxhov`. 헥스별 내용은 `mapCells`, 툴팁은 `js/maptip.js`. SVG `<title>`은 쓰지 않는다(기본 툴팁과 겹침) |
@@ -83,7 +84,7 @@ assets/overlays/start.webp    시작 위치 토큰의 가운데 그림만 잘라
 | 사이드 렌더 | `js/side.js` `buildSide()` | `SIDE`로 카드 목록 생성 |
 | 상세 패널 | `js/panel.js` `renderPanel(id)` | `S[id]`의 모든 필드를 섹션별로 출력. 그려진 시나리오는 `panelId` |
 | 상태 갱신 | `js/app.js` `refresh()` | 클리어/막힘/선택/검색 상태를 클래스 토글로 반영. 엣지는 `refreshEdges()` |
-| 검색 | `js/app.js` `HAY` / `matcher(q)` | 시나리오별 검색 문자열을 시작할 때 한 번 만든다. 번호는 완전 일치, 지역은 띄어쓰기 무시. 보물 내용은 넣지 않는다 |
+| 검색 | `js/search.js` `SIDX` / `searchScenarios(q)` / `matcher(q)` / `renderSugg()` | 시나리오별로 [라벨·원문·가중치] 칸(이름·영문·지역·그룹·좌표·요구 조건·보상·몬스터·목표·해금 경로·특수 규칙·줄거리·타일)을 시작할 때 한 번 만든다. 띄어쓰기·괄호·쌍점 무시, 여러 단어는 AND, 자음만 치면 초성 검색(이름·지역·그룹·업적·보상·몬스터·목표만). 번호(`14`, `#14`)는 완전 일치만. 입력할 때마다 `#sugg` 목록(상태 배지·찾은 칸 라벨과 `<mark>` 강조)이 뜨고 ↑↓·Enter·클릭으로 `goScenario`. 첫 Esc 는 목록만 닫는다. 목록 위 정렬 버튼: 관련도(칸 가중치 합, 보상은 `전역 업적: ` 앞머리를 떼고 '~로 시작' 가산) · 시나리오 순서 · 진행(클리어 → 진행 가능 → … → 막힘, 상태별 제목) · 항목(가장 무게 큰 찾은 칸으로 묶음). `skGroups()`, 선택은 `gh-sort`. 보물 내용은 넣지 않는다 |
 | 진행 상태 계산 | `js/state.js` `statuses()` | done/open/req/blocked/ext/pick/locked 7상태. 열림 판정은 `reachable(id)`, 고르기 대기는 `pendingPickSrc(id)` |
 | 업적 집계 | `js/state.js` `achievements()` | 클리어한 시나리오 보상에서 업적 수를 센다 |
 | 정확도 안내 | `js/panel.js` `showInfo()` | 흐름도·사이드 화면 오른쪽 위 ⓘ `#info`. 프로젝트 소개(무엇·할 수 있는 것·알아 둘 것·출처)가 중심이고 정확도는 맨 아래 접이식 `details.infoacc`(사용자 요청: 'i 는 프로젝트 전체 설명'). `gv:0` 목록을 실시간 집계(0개면 숨김) |
@@ -237,7 +238,7 @@ const OIMG=["trap-spike", ...]         // OVN 과 같은 순서. assets/overlays
 |---|---|---|
 | `localStorage['gh-done']` | 클리어한 시나리오 id 배열(JSON) | `done` Set으로 로드. try/catch로 감싸 실패해도 동작 |
 | `localStorage['gh-choice']` | `{"13": 17}` | '하나만 해금'에서 고른 시나리오. try/catch |
-| `localStorage['gh-legend']` | `true` \| `false` | 범례 펼침 여부. 없으면 넓은 화면은 펼침, 좁은 화면은 접힘. 사용자가 눌렀을 때만 저장 |
+| `localStorage['gh-sort']` | `"rel"` \| `"id"` \| `"st"` \| `"field"` | 검색 결과 목록 정렬. 없으면 관련도 |
 | `localStorage['gh-theme']` | `"light"` \| `"dark"` | `documentElement.dataset.theme`에 반영. **저장값이 없으면 시스템 설정과 무관하게 다크**(head 의 인라인 스크립트가 첫 페인트 전에 적용) |
 
 - 서버 저장·계정·동기화 없음. 사파리 프라이빗 모드 등에서 읽기/쓰기가 던질 수 있으므로 **모든 접근은 try/catch를 유지한다.**
