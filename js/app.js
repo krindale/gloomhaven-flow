@@ -37,21 +37,10 @@ function showView(v){
   if(v==='side') sizeSide();
 }
 
-// ---------- 검색 ----------
-// 번호(완전 일치)·이름·지역(띄어쓰기 무시)·목표·줄거리·메모·몬스터·보상·업적·보스·타일 ID. 보물 내용은 넣지 않는다(스포일러)
-const HAY={};
-for(const k in S){const s=S[k];
-  HAY[k]=[s.ko,s.en,LOCEN[s.loc]||'',s.goal,s.sum,s.note,...s.mons.map(m=>m.n),...s.rw,...s.reqs.flat().map(r=>r.t),(hasBoss(+k)?'보스 boss':''),...(((MAP[k]||{}).r)||[]).map(r=>r.t||'')].join(' ').toLowerCase();}
-function matcher(q){
-  if(!q) return ()=>true;
-  const nq=q.replace(/ /g,'');
-  return id=>String(id)===q||(S[id].loc&&nq.length>1&&S[id].loc.replace(/ /g,'').includes(nq))||HAY[id].includes(q);
-}
-
 // ---------- 상태 반영 ----------
 const NODE_ST=['done','open','req','blocked','locked','pick'], CARD_ST=['done','open','req','locked','pick'];
 function refresh(){
-  const q=$('#q').value.trim().toLowerCase(), st=statuses(), match=matcher(q);
+  const q=$('#q').value.trim(), st=statuses(), match=matcher(q);
   const openIds=new Set(Object.keys(st).filter(k=>st[k]==='open').map(Number));
   const hidden=id=>(!!q&&!match(id))||(onlyOpen&&!openIds.has(id));
   document.querySelectorAll('.n').forEach(g=>{const id=+g.dataset.id;
@@ -93,7 +82,6 @@ function refreshEdges(openIds){
 
 // ---------- 이벤트 ----------
 document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>showView(b.dataset.v));
-$('#q').addEventListener('input',()=>{refresh();const q=$('#q').value.trim();if(/^\d+$/.test(q)&&S[+q]) goScenario(+q)});
 // 흐름도·사이드 목록의 빈 곳을 누르면 선택 해제 + 패널 닫기 (드래그 뒤의 클릭은 panZoom 이 막는다)
 $('#graph').addEventListener('click',ev=>{if(!ev.target.closest('.n'))deselect()});
 $('#side').addEventListener('click',ev=>{if(!ev.target.closest('.card'))deselect()});
@@ -108,16 +96,13 @@ $('#theme').onclick=()=>{
 // Esc: 맨 위 팝업부터 닫는다
 document.addEventListener('keydown',ev=>{
   if(ev.key!=='Escape') return;
-  if($('#resetwrap').classList.contains('on')) closeReset();
+  if(suggOpen()) closeSugg();
+  else if($('#resetwrap').classList.contains('on')) closeReset();
   else if($('#pickwrap').classList.contains('on')) closePick();
   else if(mapId!=null) closeMap();
   else if(worldOpen()&&$('#panel').classList.contains('up')) deselect();   // 지도 위 시트부터 내린다
   else if(worldOpen()) closeWorld();
 });
-// 범례: 넓은 화면은 펼친 채, 좁은 화면은 접은 채 시작. 펼침 여부는 이 브라우저에 기억한다
-$('#legend').open=store.get('gh-legend',!narrow());
-// toggle 은 비동기로 오므로, 위에서 코드로 연 것까지 저장되지 않게 사용자가 누른 뒤에만 저장한다
-$('#legend summary').addEventListener('click',()=>setTimeout(()=>store.set('gh-legend',$('#legend').open)));
 panZoom($('#graph'),()=>zoom,z=>{zoom=z;applyZoom()},.25,2);
 panZoom($('#side'));   // 사이드 목록은 확대 없이 드래그 이동만
 panZoom($('#world'),()=>wz,setWZoom,.1,1.5);
