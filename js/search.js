@@ -139,7 +139,10 @@ function skActive(){
 function skPick(id){closeSugg(); if(narrow()) $('#q').blur(); goScenario(id)}
 
 $('#q').addEventListener('input',()=>{refresh();renderSugg()});
-$('#q').addEventListener('focus',()=>{if($('#q').value.trim()) renderSugg()});
+// 포커스가 이미 있어도(Esc 로 닫은 뒤·결과를 연 뒤) 다시 누르면 목록을 연다
+const skReopen=()=>{if(!suggOpen()&&$('#q').value.trim()) renderSugg()};
+$('#q').addEventListener('focus',skReopen);
+$('#q').addEventListener('click',skReopen);
 $('#q').addEventListener('keydown',ev=>{
   const n=document.querySelectorAll('#sugg .sg').length;
   if(ev.isComposing) return;   // 한글 조합 중의 Enter·화살표는 무시
@@ -161,3 +164,5 @@ $('#sugg').addEventListener('click',ev=>{
   const r=ev.target.closest('.sg'); if(r) skPick(+r.dataset.id);
 });
 document.addEventListener('pointerdown',ev=>{if(suggOpen()&&!ev.target.closest('.search')) closeSugg()});
+// Tab 등으로 검색 영역을 벗어나면 닫는다(다른 팝업 뒤에 숨은 채 남아 Esc 를 먼저 가로채지 않게)
+$('.search').addEventListener('focusout',ev=>{if(suggOpen()&&!(ev.relatedTarget&&ev.relatedTarget.closest('.search'))) closeSugg()});
